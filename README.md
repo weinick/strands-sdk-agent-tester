@@ -1,16 +1,83 @@
-# StrandsSDK Sample Project
+# 🤖 Strands SDK Agent Tester
 
-A comprehensive sample project demonstrating how to build AI agents using the Strands Agents SDK from Amazon.
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Streamlit](https://img.shields.io/badge/streamlit-1.28+-red.svg)](https://streamlit.io/)
+[![AWS Bedrock](https://img.shields.io/badge/AWS-Bedrock-orange.svg)](https://aws.amazon.com/bedrock/)
+[![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](LICENSE)
 
-## What is Strands Agents SDK?
+A comprehensive sample project demonstrating how to build AI agents using the Strands Agents SDK from Amazon. Features an interactive Streamlit web interface for testing and interacting with 6 different AI agents.
 
-Strands Agents SDK is a simple-to-use, code-first framework for building AI agents developed by Amazon. It provides:
+## ✨ Features
 
-- **Model-agnostic support**: Works with AWS Bedrock, OpenAI, Anthropic, and other providers
-- **Built-in tools**: Pre-built tools for common tasks like web search, file operations, calculations
-- **Custom tools**: Easy creation of custom tools using Python decorators
-- **Multi-agent systems**: Support for complex agent interactions
-- **Production-ready**: Includes deployment patterns and best practices
+- **🎯 6 AI Agents**: 3 basic + 3 advanced agents with different capabilities
+- **🖥️ Interactive UI**: Beautiful Streamlit web interface for easy testing
+- **🔧 Multi-Model Support**: Works with AWS Bedrock, OpenAI, and Anthropic
+- **🛠️ Built-in Tools**: Pre-built tools for calculations, web search, file operations
+- **🎨 Custom Tools**: Easy creation of custom tools using Python decorators
+- **🤝 Multi-Agent Systems**: Support for complex agent interactions
+- **📊 Live Monitoring**: Real-time agent status and session statistics
+- **💾 Export Capability**: Download chat logs for analysis
+- **🧪 Comprehensive Testing**: Full test suite for all agents
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Python 3.10 or higher
+- AWS account with Bedrock access (for default model provider)
+- AWS CLI configured with appropriate credentials
+
+### Installation
+
+1. **Clone this repository:**
+```bash
+git clone https://github.com/YOUR_USERNAME/strands-sdk-agent-tester.git
+cd strands-sdk-agent-tester
+```
+
+2. **Create and activate a Python virtual environment:**
+```bash
+# Create virtual environment
+python -m venv venv
+
+# Activate virtual environment
+# On macOS/Linux:
+source venv/bin/activate
+# On Windows:
+# venv\Scripts\activate
+```
+
+3. **Install dependencies:**
+```bash
+pip install -r requirements.txt
+```
+
+4. **Set up environment variables:**
+```bash
+cp .env.example .env
+# Edit .env with your configuration
+```
+
+5. **Configure AWS credentials (for Bedrock):**
+```bash
+aws configure
+```
+
+6. **Enable Claude model access in AWS Bedrock console** (Claude 3.7 Sonnet recommended)
+
+### Running the Application
+
+#### Using the Streamlit UI (Recommended)
+```bash
+# Launch the interactive web interface
+python start_ui.py
+```
+
+The UI will open in your browser at `http://localhost:8501` and provides:
+- Interactive chat interface for all agents
+- Real-time configuration switching
+- Session monitoring and chat export
+- User-friendly testing environment
 
 ## Project Structure
 
