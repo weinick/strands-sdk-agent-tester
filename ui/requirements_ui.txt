@@ -1,0 +1,24 @@
+# Streamlit UI Requirements
+# Install with: pip install -r requirements_ui.txt
+
+# Core UI framework
+streamlit>=1.28.0
+
+# Additional UI components
+streamlit-chat>=0.1.1
+streamlit-option-menu>=0.3.6
+
+# Data handling
+pandas>=1.5.0
+numpy>=1.24.0
+
+# Utilities
+python-dotenv>=1.0.0
+pathlib2>=2.3.7
+
+# Optional: Enhanced UI components
+plotly>=5.15.0
+streamlit-aggrid>=0.3.4
+streamlit-elements>=0.1.0
+
+# Note: Main Strands SDK dependencies should be installed from requirements.txt

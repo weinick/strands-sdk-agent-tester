@@ -1,0 +1,34 @@
+# Core Dependencies for Strands SDK Agents
+# Install with: pip install -r requirements.txt
+
+# AWS SDK for Bedrock integration
+boto3>=1.34.0
+botocore>=1.34.0
+
+# HTTP requests for web operations
+requests>=2.31.0
+
+# Additional utilities
+python-dotenv>=1.0.0
+
+# Optional: Enhanced functionality
+# Uncomment these for additional features:
+
+# For advanced text processing
+# nltk>=3.8
+# spacy>=3.7.0
+
+# For data analysis
+# pandas>=1.5.0
+# numpy>=1.24.0
+
+# For web scraping (if implementing real web search)
+# beautifulsoup4>=4.12.0
+# selenium>=4.15.0
+
+# For advanced file operations
+# chardet>=5.2.0  # Character encoding detection
+# python-magic>=0.4.27  # File type detection
+
+# Note: Install Streamlit UI dependencies separately with:
+# pip install -r requirements_ui.txt
