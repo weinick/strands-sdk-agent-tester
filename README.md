@@ -201,17 +201,14 @@ python advanced_agent/multi_agent_system.py
 
 #### Testing Agents
 ```bash
-# Comprehensive UI testing (all agents through Streamlit interface)
-python tests/run_all_ui_tests.py
+# Playwright UI testing (realistic browser automation)
+python tests/test_individual_agents.py --all      # Test all agents with conversations
+python tests/test_individual_agents.py --agent "Simple Agent"  # Test specific agent
+python tests/test_streamlit_ui.py                 # Comprehensive UI tests
 
-# Quick functionality test
-python tests/run_all_ui_tests.py --quick
-
-# Test specific agent types
-python tests/test_ui_basic_agents.py      # Simple, Tools, Custom Tool agents
-python tests/test_ui_advanced_agents.py   # Research, File Manager, Multi-Agent
-python tests/test_user_scenarios.py       # Realistic user interactions
-python tests/test_ui_performance.py       # Performance and load testing
+# Setup Playwright testing
+pip install -r tests/requirements_playwright.txt
+playwright install chromium
 
 # Traditional agent tests (direct testing)
 python tests/test_agents.py
@@ -221,37 +218,40 @@ python -m pytest tests/test_basic_agents.py
 python -m pytest tests/test_advanced_agents.py
 ```
 
-## 🧪 Comprehensive Testing
+## 🎭 Comprehensive Testing
 
-This project includes an extensive testing suite that simulates real user interactions through the Streamlit UI:
+This project includes an extensive testing suite that uses Playwright for realistic browser-based UI testing:
 
 ### **Test Categories**
-- **🤖 Basic Agent Tests** - Core functionality testing
-- **🔬 Advanced Agent Tests** - Complex feature validation  
-- **👤 User Scenario Tests** - Realistic user interaction simulation
-- **⚡ Performance Tests** - Response time and load testing
-- **🎯 Comprehensive Tests** - Full end-to-end validation
+- **🎭 Playwright UI Tests** - Real browser automation testing
+- **🤖 Individual Agent Tests** - Focused conversation testing  
+- **👤 User Persona Tests** - Realistic user interaction simulation
+- **🔄 Browser Automation** - Actual Streamlit UI interactions
 
 ### **Quick Testing**
 ```bash
-# Run all tests with comprehensive reporting
-python tests/run_all_ui_tests.py
+# Install Playwright
+pip install -r tests/requirements_playwright.txt
+playwright install chromium
 
-# Quick test for development
-python tests/run_all_ui_tests.py --quick
+# Test all agents with realistic conversations
+python tests/test_individual_agents.py --all
 
-# Check test environment
-python tests/run_all_ui_tests.py --check
+# Test specific agent
+python tests/test_individual_agents.py --agent "Simple Agent"
+
+# Comprehensive UI tests
+python tests/test_streamlit_ui.py
 ```
 
 ### **Test Results**
 All tests generate detailed reports including:
-- Success rates and performance metrics
-- User experience simulation results
-- Response time analysis and load testing
-- Comprehensive HTML and JSON reports
+- Real browser interaction results
+- Conversation flow success rates
+- UI responsiveness metrics
+- Comprehensive JSON and visual reports
 
-See [tests/README.md](tests/README.md) for detailed testing documentation.
+See [tests/README.md](tests/README.md) for detailed Playwright testing documentation.
 
 ## Documentation
 
