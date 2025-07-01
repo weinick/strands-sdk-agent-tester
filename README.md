@@ -31,7 +31,7 @@ A comprehensive sample project demonstrating how to build AI agents using the St
 
 1. **Clone this repository:**
 ```bash
-git clone https://github.com/YOUR_USERNAME/strands-sdk-agent-tester.git
+git clone https://github.com/weinick/strands-sdk-agent-tester.git
 cd strands-sdk-agent-tester
 ```
 
