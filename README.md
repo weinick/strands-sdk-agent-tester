@@ -201,7 +201,19 @@ python advanced_agent/multi_agent_system.py
 
 #### Testing Agents
 ```bash
-# Test all agents functionality
+# Comprehensive UI testing (all agents through Streamlit interface)
+python tests/run_all_ui_tests.py
+
+# Quick functionality test
+python tests/run_all_ui_tests.py --quick
+
+# Test specific agent types
+python tests/test_ui_basic_agents.py      # Simple, Tools, Custom Tool agents
+python tests/test_ui_advanced_agents.py   # Research, File Manager, Multi-Agent
+python tests/test_user_scenarios.py       # Realistic user interactions
+python tests/test_ui_performance.py       # Performance and load testing
+
+# Traditional agent tests (direct testing)
 python tests/test_agents.py
 
 # Run specific test suites
@@ -209,17 +221,37 @@ python -m pytest tests/test_basic_agents.py
 python -m pytest tests/test_advanced_agents.py
 ```
 
-## Features Demonstrated
+## 🧪 Comprehensive Testing
 
-- ✅ Basic agent creation and interaction
-- ✅ Integration with built-in tools (calculator, web search, file operations)
-- ✅ Custom tool development
-- ✅ Web research capabilities
-- ✅ File management operations
-- ✅ Multi-agent collaboration
-- ✅ Error handling and logging
-- ✅ Testing framework
-- ✅ Production deployment patterns
+This project includes an extensive testing suite that simulates real user interactions through the Streamlit UI:
+
+### **Test Categories**
+- **🤖 Basic Agent Tests** - Core functionality testing
+- **🔬 Advanced Agent Tests** - Complex feature validation  
+- **👤 User Scenario Tests** - Realistic user interaction simulation
+- **⚡ Performance Tests** - Response time and load testing
+- **🎯 Comprehensive Tests** - Full end-to-end validation
+
+### **Quick Testing**
+```bash
+# Run all tests with comprehensive reporting
+python tests/run_all_ui_tests.py
+
+# Quick test for development
+python tests/run_all_ui_tests.py --quick
+
+# Check test environment
+python tests/run_all_ui_tests.py --check
+```
+
+### **Test Results**
+All tests generate detailed reports including:
+- Success rates and performance metrics
+- User experience simulation results
+- Response time analysis and load testing
+- Comprehensive HTML and JSON reports
+
+See [tests/README.md](tests/README.md) for detailed testing documentation.
 
 ## Documentation
 
