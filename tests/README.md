@@ -250,4 +250,8 @@ python -m pytest tests/ -v
 # Check console output for detailed results
 ```
 
+<<<<<<< HEAD
 **Happy Testing! 🧪✨**
+=======
+**Happy Testing! 🧪✨**
+>>>>>>> 73df38d3b5dd5dbaae12cd349386ee846a1cfe7f
