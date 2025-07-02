@@ -201,57 +201,51 @@ python advanced_agent/multi_agent_system.py
 
 #### Testing Agents
 ```bash
-# Playwright UI testing (realistic browser automation)
-python tests/test_individual_agents.py --all      # Test all agents with conversations
-python tests/test_individual_agents.py --agent "Simple Agent"  # Test specific agent
-python tests/test_streamlit_ui.py                 # Comprehensive UI tests
-
-# Setup Playwright testing
-pip install -r tests/requirements_playwright.txt
-playwright install chromium
-
-# Traditional agent tests (direct testing)
+# Direct agent testing (recommended)
 python tests/test_agents.py
 
 # Run specific test suites
 python -m pytest tests/test_basic_agents.py
 python -m pytest tests/test_advanced_agents.py
+
+# Run all tests with verbose output
+python -m pytest tests/ -v
 ```
 
-## 🎭 Comprehensive Testing
+## 🧪 Comprehensive Testing
 
-This project includes an extensive testing suite that uses Playwright for realistic browser-based UI testing:
+This project includes an extensive testing suite for direct agent testing:
 
 ### **Test Categories**
-- **🎭 Playwright UI Tests** - Real browser automation testing
-- **🤖 Individual Agent Tests** - Focused conversation testing  
-- **👤 User Persona Tests** - Realistic user interaction simulation
-- **🔄 Browser Automation** - Actual Streamlit UI interactions
+- **🤖 Basic Agent Tests** - Simple conversational agents
+- **🔧 Advanced Agent Tests** - Complex agents with tools and capabilities  
+- **🧪 Integration Tests** - End-to-end agent functionality
+- **⚡ Unit Tests** - Individual component testing
 
 ### **Quick Testing**
 ```bash
-# Install Playwright
-pip install -r tests/requirements_playwright.txt
-playwright install chromium
+# Install dependencies
+pip install -r requirements.txt
 
-# Test all agents with realistic conversations
-python tests/test_individual_agents.py --all
+# Test all agents
+python tests/test_agents.py
 
-# Test specific agent
-python tests/test_individual_agents.py --agent "Simple Agent"
+# Test specific categories
+python -m pytest tests/test_basic_agents.py
+python -m pytest tests/test_advanced_agents.py
 
-# Comprehensive UI tests
-python tests/test_streamlit_ui.py
+# Run all tests with verbose output
+python -m pytest tests/ -v
 ```
 
 ### **Test Results**
 All tests generate detailed reports including:
-- Real browser interaction results
-- Conversation flow success rates
-- UI responsiveness metrics
-- Comprehensive JSON and visual reports
+- Agent response accuracy
+- Tool integration success rates
+- Performance metrics
+- Error handling effectiveness
 
-See [tests/README.md](tests/README.md) for detailed Playwright testing documentation.
+See [tests/README.md](tests/README.md) for detailed testing documentation.
 
 ## Documentation
 

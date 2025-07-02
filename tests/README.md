@@ -1,247 +1,253 @@
-# 🎭 Strands SDK Agent Playwright Testing Suite
+# 🧪 Strands SDK Agent Testing Suite
 
-Comprehensive browser-based testing framework for all 6 Strands SDK agents using Playwright. This suite provides realistic UI testing by actually interacting with the Streamlit web interface through automated browser actions.
+Comprehensive testing framework for all 6 Strands SDK agents. This suite provides direct agent testing through Python unit tests and integration tests.
 
 ## 🚀 Quick Start
 
-### **Setup Playwright**
+### **Setup Testing Environment**
 ```bash
-# Install Playwright and dependencies
-pip install -r tests/requirements_playwright.txt
+# Install testing dependencies
+pip install -r requirements.txt
 
-# Install browser binaries
-playwright install chromium
-
-# Or use the automated setup
-python tests/run_playwright_tests.py --install
+# Run all tests
+python -m pytest tests/
 ```
 
 ### **Run Tests**
 ```bash
-# Test all agents with realistic conversations
-python tests/test_individual_agents.py --all
+# Test all agents
+python tests/test_agents.py
 
-# Test specific agent
-python tests/test_individual_agents.py --agent "Simple Agent"
+# Test basic agents only
+python -m pytest tests/test_basic_agents.py
 
-# Run comprehensive UI tests
-python tests/test_streamlit_ui.py
+# Test advanced agents only  
+python -m pytest tests/test_advanced_agents.py
 
-# Check setup
-python tests/run_playwright_tests.py --check
+# Run with verbose output
+python -m pytest tests/ -v
 ```
 
 ## 🎯 Test Overview
 
-### **What Gets Tested**
+### **Test Categories**
+- **🤖 Basic Agent Tests** - Simple conversational agents
+- **🔧 Advanced Agent Tests** - Complex agents with tools and capabilities
+- **🧪 Integration Tests** - End-to-end agent functionality
+- **⚡ Unit Tests** - Individual component testing
 
-| Agent | Conversation Flow | Key Interactions |
-|-------|------------------|------------------|
-| **Simple Agent** | Introduction & capabilities | Basic conversation, self-description |
-| **Agent with Tools** | Tool demonstration | Math calculations, web search |
-| **Custom Tool Agent** | Custom capabilities | Text analysis, hash generation |
-| **Web Research Agent** | Research scenarios | Information gathering, trend analysis |
-| **File Manager Agent** | File operations | Directory listing, project structure |
-| **Multi Agent System** | Coordination demo | Agent collaboration, system overview |
-
-### **Test Types**
-
-1. **🤖 Individual Agent Tests** - Focused conversation flows
-2. **🎭 Comprehensive UI Tests** - Full interface testing
-3. **👤 User Persona Tests** - Realistic user scenarios
-4. **🔄 Browser Automation** - Actual UI interactions
+### **Agents Tested**
+1. **Simple Agent** - Basic conversational AI
+2. **Agent with Tools** - Calculator, web search, file operations
+3. **Custom Tool Agent** - Custom Python function tools
+4. **Web Research Agent** - Advanced web research capabilities
+5. **File Manager Agent** - File system operations
+6. **Multi-Agent System** - Collaborative agent interactions
 
 ## 📋 Test Files
 
 ### **Main Test Files**
-- `test_streamlit_ui.py` - Comprehensive Playwright UI tests
-- `test_individual_agents.py` - Individual agent conversation tests
-- `run_playwright_tests.py` - Test runner and setup utility
+- `test_agents.py` - Comprehensive agent functionality tests
+- `test_basic_agents.py` - Basic agent conversation tests
+- `test_advanced_agents.py` - Advanced agent capability tests
 
 ### **Generated Reports**
-- `playwright_ui_results.json` - Comprehensive test results
-- `all_agents_playwright_results.json` - Individual agent results
-- `{agent_name}_test_result.json` - Specific agent results
+- Test results are displayed in console output
+- Use pytest's built-in reporting for detailed analysis
+- Add `--html=report.html` for HTML test reports
 
-## 🎭 How Playwright Testing Works
+## 🔧 How Testing Works
 
-### **Browser Automation**
+### **Direct Agent Testing**
 ```python
-# Real browser interactions
-await page.goto("http://localhost:8501")
-await page.locator("select").select_option(label="Simple Agent")
-await page.locator("textarea").fill("Hello, how are you?")
-await page.locator("button").click()
+# Example test structure
+def test_simple_agent():
+    """Test basic agent conversation"""
+    agent = create_simple_agent()
+    response = agent.chat("Hello, how are you?")
+    assert response is not None
+    assert len(response) > 0
 ```
 
-### **Response Validation**
+### **Tool Integration Testing**
 ```python
-# Check for actual UI responses
-chat_messages = page.locator("div[data-testid='stChatMessage']")
-response_text = await last_message.inner_text()
-success = len(response_text.strip()) > 20
+# Example tool test
+def test_agent_with_calculator():
+    """Test agent calculator functionality"""
+    agent = create_agent_with_tools()
+    response = agent.chat("What is 15 + 27?")
+    assert "42" in response
 ```
 
-### **Realistic Conversations**
-Each agent is tested with multi-turn conversations:
-
+### **Multi-Agent Testing**
 ```python
-# Example: Custom Tool Agent conversation
-[
-    "Hello! I'm interested in your custom capabilities.",
-    "Can you analyze this text: 'AI is revolutionizing technology'?",
-    "Generate a secure hash for the password 'mySecurePass123'",
-    "What other custom tools do you have available?",
-    "This is exactly what I needed for my project!"
-]
+# Example multi-agent test
+def test_multi_agent_collaboration():
+    """Test agent collaboration"""
+    system = create_multi_agent_system()
+    result = system.process_complex_task("Research and analyze topic")
+    assert result.success
 ```
 
-## 📊 Test Results and Metrics
+## 🛠️ Test Configuration
 
-### **Success Criteria**
-- **Response Quality**: Substantial responses (>20 characters)
-- **Conversation Flow**: Multi-turn dialogue success
-- **UI Interaction**: Proper form submission and response display
-- **Agent Selection**: Correct agent switching in UI
+### **Environment Variables**
+Create a `.env` file in the project root:
+```bash
+# Model Configuration
+MODEL_PROVIDER=bedrock
+AWS_REGION=us-east-1
 
-### **Performance Metrics**
-- **Success Rate**: Percentage of successful interactions
-- **Response Time**: Time to receive agent responses
-- **UI Responsiveness**: Browser interaction timing
-- **Conversation Completion**: Full dialogue success
+# Testing Configuration
+TEST_TIMEOUT=30
+VERBOSE_TESTING=true
+```
 
-### **Grading Scale**
-- **✅ PASS (70%+)**: Agent working well through UI
-- **⚠️ PARTIAL (40-69%)**: Some issues, needs attention
-- **❌ FAIL (<40%)**: Significant problems, requires fixes
+### **AWS Configuration**
+Ensure AWS credentials are configured:
+```bash
+aws configure
+# or set environment variables:
+export AWS_ACCESS_KEY_ID=your_key
+export AWS_SECRET_ACCESS_KEY=your_secret
+export AWS_DEFAULT_REGION=us-east-1
+```
 
-## 🛠️ Troubleshooting
+## 🐛 Troubleshooting
 
 ### **Common Issues**
 
-**Playwright Not Installed:**
+**Import Errors:**
 ```bash
-pip install playwright
-playwright install chromium
+# Ensure project is in Python path
+export PYTHONPATH="${PYTHONPATH}:$(pwd)"
 ```
 
-**Streamlit Connection Issues:**
+**AWS Credential Issues:**
 ```bash
-# Check if Streamlit is running
-curl http://localhost:8501/healthz
+# Check AWS configuration
+aws sts get-caller-identity
 
-# Manual Streamlit start
-cd ui && streamlit run streamlit_ui.py --port 8501
+# Configure if needed
+aws configure
 ```
 
-**Browser Launch Failures:**
+**Model Access Issues:**
+- Ensure Claude 3.7 Sonnet is enabled in AWS Bedrock console
+- Check region availability for your selected models
+- Verify IAM permissions for Bedrock access
+
+**Timeout Issues:**
 ```bash
-# Install system dependencies (Linux)
-playwright install-deps
-
-# Use different browser
-# Edit test files to use firefox or webkit instead of chromium
+# Increase timeout in test configuration
+export TEST_TIMEOUT=60
 ```
 
-### **Debug Mode**
-```python
-# Run with visible browser for debugging
-browser = await p.chromium.launch(headless=False, slow_mo=1000)
-```
+## 📊 Test Results Analysis
 
-## 🎯 Test Scenarios
+### **Understanding Test Output**
+- ✅ **PASS** - Agent responded correctly
+- ❌ **FAIL** - Agent failed to respond or gave incorrect response
+- ⚠️ **SKIP** - Test skipped due to configuration issues
+- 🔄 **RETRY** - Test retried due to temporary issues
 
-### **Basic Agent Scenarios**
-- **Simple Agent**: Greeting, capability inquiry, self-description
-- **Agent with Tools**: Math calculations, web search, tool listing
-- **Custom Tool Agent**: Text analysis, hash generation, tool inquiry
-
-### **Advanced Agent Scenarios**
-- **Web Research Agent**: AI research, climate solutions, tech trends
-- **File Manager Agent**: Directory listing, project structure, file operations
-- **Multi Agent System**: Task coordination, agent collaboration, system inquiry
-
-### **User Persona Testing**
-- **Developer**: Technical questions, tool-focused interactions
-- **Researcher**: Information gathering, analysis requests
-- **Business User**: Productivity-focused, practical applications
-- **Student**: Learning-oriented, explanation requests
+### **Performance Metrics**
+- **Response Time** - How quickly agents respond
+- **Success Rate** - Percentage of successful interactions
+- **Tool Usage** - Effectiveness of tool integration
+- **Error Handling** - How well agents handle edge cases
 
 ## 📈 Best Practices
 
 ### **Running Tests**
-1. **Start with Setup Check**: `python tests/run_playwright_tests.py --check`
-2. **Test Individual Agents**: Use `--agent` flag for focused testing
-3. **Run Full Suite**: Use `--all` for comprehensive testing
-4. **Monitor Results**: Check JSON reports for detailed analysis
+1. **Start with Basic Tests**: Run simple agent tests first
+2. **Check Configuration**: Ensure AWS and environment setup
+3. **Monitor Output**: Watch for error patterns
+4. **Analyze Results**: Review failed tests for improvements
 
-### **Interpreting Results**
-1. **Focus on Success Rates**: Aim for >70% success rate
-2. **Check Conversation Flow**: Ensure multi-turn dialogues work
-3. **Monitor UI Responsiveness**: Watch for timeout issues
-4. **Review Error Messages**: Address specific failure points
+### **Test Development**
+1. **Write Clear Tests**: Use descriptive test names and assertions
+2. **Test Edge Cases**: Include error conditions and boundary cases
+3. **Mock External Services**: Use mocks for reliable testing
+4. **Document Expectations**: Clear comments on test objectives
 
-### **Maintenance**
-1. **Update Conversations**: Add new scenarios as agents evolve
-2. **Adjust Timeouts**: Tune wait times based on performance
-3. **Monitor Browser Compatibility**: Test with different browsers
-4. **Update Selectors**: Maintain UI element selectors as Streamlit updates
+### **Debugging Failed Tests**
+1. **Check Logs**: Review agent logs for error details
+2. **Verify Configuration**: Ensure all environment variables are set
+3. **Test Isolation**: Run individual tests to isolate issues
+4. **Update Dependencies**: Ensure all packages are current
 
-## 🚀 Example Usage
+## 🎯 Advanced Testing
 
-### **Test All Agents**
-```bash
-python tests/test_individual_agents.py --all
+### **Custom Test Scenarios**
+```python
+# Create custom test scenarios
+def test_custom_scenario():
+    """Test specific use case"""
+    agent = create_agent()
+    # Your custom test logic here
+    pass
 ```
 
-### **Test Specific Agent**
-```bash
-python tests/test_individual_agents.py --agent "Web Research Agent"
+### **Performance Testing**
+```python
+import time
+
+def test_agent_performance():
+    """Test agent response time"""
+    agent = create_agent()
+    start_time = time.time()
+    response = agent.chat("Quick question")
+    response_time = time.time() - start_time
+    assert response_time < 10  # Should respond within 10 seconds
 ```
 
-### **List Available Agents**
-```bash
-python tests/test_individual_agents.py --list
+### **Stress Testing**
+```python
+def test_agent_stress():
+    """Test agent under load"""
+    agent = create_agent()
+    for i in range(100):
+        response = agent.chat(f"Question {i}")
+        assert response is not None
 ```
 
-### **Run Comprehensive Tests**
-```bash
-python tests/test_streamlit_ui.py
-```
+## 🎉 Benefits of Direct Testing
 
-## 🎉 Benefits of Playwright Testing
-
-### **Realistic Testing**
-- **Actual Browser**: Tests real user interactions
-- **UI Validation**: Ensures interface works correctly
-- **End-to-End**: Complete user journey testing
+### **Reliable Testing**
+- **Direct Integration**: Tests actual agent code without UI dependencies
+- **Fast Execution**: No browser startup or UI rendering delays
+- **Consistent Results**: Eliminates UI timing and rendering issues
 
 ### **Comprehensive Coverage**
-- **All Agents**: Tests every agent through UI
-- **Multiple Scenarios**: Various conversation patterns
-- **User Personas**: Different user types and needs
+- **Unit Testing**: Test individual components in isolation
+- **Integration Testing**: Test complete agent workflows
+- **Error Handling**: Test edge cases and error conditions
 
-### **Reliable Results**
-- **Browser Automation**: Consistent, repeatable tests
-- **Visual Validation**: Actual UI element interaction
-- **Real Performance**: Measures actual response times
+### **Easy Debugging**
+- **Direct Access**: Full access to agent internals and logs
+- **Stack Traces**: Clear error reporting and debugging information
+- **Isolated Testing**: Test specific functionality without external dependencies
 
 ---
 
-## 🎭 Getting Started with Playwright Testing
+## 🧪 Getting Started with Agent Testing
 
-Ready to test your Strands SDK agents with realistic browser automation?
+Ready to test your Strands SDK agents with comprehensive Python tests?
 
 ```bash
-# 1. Install Playwright
-pip install -r tests/requirements_playwright.txt
-playwright install chromium
+# 1. Install dependencies
+pip install -r requirements.txt
 
-# 2. Test all agents
-python tests/test_individual_agents.py --all
+# 2. Configure environment
+cp .env.example .env
+# Edit .env with your settings
 
-# 3. Review results
-cat tests/all_agents_playwright_results.json
+# 3. Run all tests
+python -m pytest tests/ -v
+
+# 4. Review results
+# Check console output for detailed results
 ```
 
-**Happy Testing with Playwright! 🎭✨**
+**Happy Testing! 🧪✨**
