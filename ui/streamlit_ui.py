@@ -55,6 +55,61 @@ st.markdown("""
         border-radius: 5px;
         border: 1px solid #f5c6cb;
     }
+    .sample-input-section {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        border: 2px solid #dee2e6;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .stButton > button {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0,123,255,0.3);
+        min-height: 3rem;
+    }
+    .stButton > button:hover {
+        background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,123,255,0.4);
+    }
+    .stButton > button:active {
+        transform: translateY(0px);
+        box-shadow: 0 2px 4px rgba(0,123,255,0.3);
+    }
+    /* Different colors for different agent types */
+    div[data-testid="column"]:nth-child(1) .stButton > button {
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        box-shadow: 0 2px 4px rgba(40,167,69,0.3);
+    }
+    div[data-testid="column"]:nth-child(1) .stButton > button:hover {
+        background: linear-gradient(135deg, #1e7e34 0%, #155724 100%);
+        box-shadow: 0 4px 12px rgba(40,167,69,0.4);
+    }
+    div[data-testid="column"]:nth-child(2) .stButton > button {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        box-shadow: 0 2px 4px rgba(255,193,7,0.3);
+        color: #212529;
+    }
+    div[data-testid="column"]:nth-child(2) .stButton > button:hover {
+        background: linear-gradient(135deg, #e0a800 0%, #d39e00 100%);
+        box-shadow: 0 4px 12px rgba(255,193,7,0.4);
+    }
+    div[data-testid="column"]:nth-child(3) .stButton > button {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        box-shadow: 0 2px 4px rgba(220,53,69,0.3);
+    }
+    div[data-testid="column"]:nth-child(3) .stButton > button:hover {
+        background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
+        box-shadow: 0 4px 12px rgba(220,53,69,0.4);
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -189,9 +244,122 @@ col1, col2 = st.columns([2, 1])
 with col1:
     st.markdown("## 💬 Chat Interface")
     
+    # Sample inputs section for different agents
+    if selected_agent in ["Simple Agent", "Agent with Tools", "Custom Tool Agent", "Web Research Agent", "File Manager Agent", "Multi Agent System"]:
+        st.markdown('<div class="sample-input-section">', unsafe_allow_html=True)
+        st.markdown("### 🎯 Quick Test Examples")
+        st.markdown(f"*Click any example below to test the {selected_agent} instantly:*")
+        
+        # Create columns for sample input buttons
+        sample_col1, sample_col2, sample_col3 = st.columns(3)
+        
+        # Define sample inputs for each agent
+        if selected_agent == "Simple Agent":
+            with sample_col1:
+                st.markdown("**💬 Conversation**")
+                if st.button("👋 Hello, introduce yourself", key="sample1", use_container_width=True, help="Basic greeting and introduction"):
+                    st.session_state.sample_input = "Hello! Can you introduce yourself and tell me what you can do?"
+            
+            with sample_col2:
+                st.markdown("**🤔 General Knowledge**")
+                if st.button("🌍 Tell me about AI", key="sample2", use_container_width=True, help="General knowledge question"):
+                    st.session_state.sample_input = "Can you explain what artificial intelligence is and how it works?"
+            
+            with sample_col3:
+                st.markdown("**✍️ Creative Writing**")
+                if st.button("📝 Write a short story", key="sample3", use_container_width=True, help="Creative writing task"):
+                    st.session_state.sample_input = "Write a short story about a robot learning to paint"
+        
+        elif selected_agent == "Agent with Tools":
+            with sample_col1:
+                st.markdown("**🧮 Calculator**")
+                if st.button("➕ Calculate 25 * 47", key="sample1", use_container_width=True, help="Test mathematical calculation"):
+                    st.session_state.sample_input = "Can you calculate 25 * 47 for me?"
+            
+            with sample_col2:
+                st.markdown("**🔍 Web Search**")
+                if st.button("🌐 Search for Python tutorials", key="sample2", use_container_width=True, help="Test web search functionality"):
+                    st.session_state.sample_input = "Search for Python programming tutorials"
+            
+            with sample_col3:
+                st.markdown("**🌤️ Weather**")
+                if st.button("☀️ Weather in San Francisco", key="sample3", use_container_width=True, help="Test weather information"):
+                    st.session_state.sample_input = "What's the weather like in San Francisco?"
+        
+        elif selected_agent == "Custom Tool Agent":
+            with sample_col1:
+                st.markdown("**📊 Text Analysis**")
+                if st.button("📈 Analyze sample text", key="sample1", use_container_width=True, help="Test text analysis capabilities"):
+                    st.session_state.sample_input = "Analyze this text: 'The quick brown fox jumps over the lazy dog. This sentence contains every letter of the alphabet at least once.'"
+            
+            with sample_col2:
+                st.markdown("**🔑 Keywords**")
+                if st.button("🏷️ Extract keywords", key="sample2", use_container_width=True, help="Test keyword extraction"):
+                    st.session_state.sample_input = "Extract keywords from this text: 'Machine learning and artificial intelligence are transforming modern technology'"
+            
+            with sample_col3:
+                st.markdown("**🔐 Security**")
+                if st.button("🛡️ Generate password", key="sample3", use_container_width=True, help="Test password generation"):
+                    st.session_state.sample_input = "Generate a secure password with 12 characters"
+        
+        elif selected_agent == "Web Research Agent":
+            with sample_col1:
+                st.markdown("**🔍 Research**")
+                if st.button("📚 Research AI trends", key="sample1", use_container_width=True, help="Test research capabilities"):
+                    st.session_state.sample_input = "Research the latest trends in artificial intelligence for 2024"
+            
+            with sample_col2:
+                st.markdown("**📰 News**")
+                if st.button("📺 Find tech news", key="sample2", use_container_width=True, help="Test news gathering"):
+                    st.session_state.sample_input = "Find recent news about machine learning breakthroughs"
+            
+            with sample_col3:
+                st.markdown("**🎓 Learning**")
+                if st.button("📖 Best Python resources", key="sample3", use_container_width=True, help="Test educational content search"):
+                    st.session_state.sample_input = "Find the best online resources for learning Python programming"
+        
+        elif selected_agent == "File Manager Agent":
+            with sample_col1:
+                st.markdown("**📁 Directory Exploration**")
+                if st.button("📋 List files in current directory", key="sample1", use_container_width=True, help="Test Case 1: Basic directory listing"):
+                    st.session_state.sample_input = "List files in the current directory"
+            
+            with sample_col2:
+                st.markdown("**🔍 File Search**")
+                if st.button("🐍 Search for Python files", key="sample2", use_container_width=True, help="Test Case 2: Pattern-based file search"):
+                    st.session_state.sample_input = "Search for all Python files in the project"
+            
+            with sample_col3:
+                st.markdown("**🧭 Navigation**")
+                if st.button("📍 Where am I?", key="sample3", use_container_width=True, help="Test Case 3: Current directory check"):
+                    st.session_state.sample_input = "Where am I? What's my current directory?"
+        
+        elif selected_agent == "Multi Agent System":
+            with sample_col1:
+                st.markdown("**🤝 Collaboration**")
+                if st.button("🧮 Math + Analysis", key="sample1", use_container_width=True, help="Test multi-agent collaboration"):
+                    st.session_state.sample_input = "Calculate the square root of 144 and then analyze the result"
+            
+            with sample_col2:
+                st.markdown("**📊 Complex Task**")
+                if st.button("📈 Data + Research", key="sample2", use_container_width=True, help="Test complex multi-step task"):
+                    st.session_state.sample_input = "Research Python data science libraries and create a comparison"
+            
+            with sample_col3:
+                st.markdown("**🎯 Problem Solving**")
+                if st.button("🧩 Multi-step problem", key="sample3", use_container_width=True, help="Test collaborative problem solving"):
+                    st.session_state.sample_input = "Help me plan a Python learning roadmap with timeline and resources"
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown("---")
+    
     # Initialize chat history
     if "messages" not in st.session_state:
         st.session_state.messages = []
+    
+    # Initialize sample input state
+    if "sample_input" not in st.session_state:
+        st.session_state.sample_input = None
     
     # Display chat messages
     for message in st.session_state.messages:
@@ -200,8 +368,20 @@ with col1:
             if "timestamp" in message:
                 st.caption(f"*{message['timestamp']}*")
     
-    # Chat input
-    if prompt := st.chat_input("Ask your agent anything..."):
+    # Handle sample input or regular chat input
+    prompt = None
+    
+    # Check if sample input was clicked
+    if st.session_state.sample_input:
+        prompt = st.session_state.sample_input
+        st.session_state.sample_input = None  # Reset after use
+    
+    # Regular chat input
+    if not prompt:
+        prompt = st.chat_input("Ask your agent anything...")
+    
+    # Process the input (either from sample or chat input)
+    if prompt:
         # Add user message to chat history
         timestamp = datetime.now().strftime("%H:%M:%S")
         st.session_state.messages.append({
@@ -248,6 +428,9 @@ with col1:
                         "content": response,
                         "timestamp": response_timestamp
                     })
+                    
+                    # Rerun to update the UI with new messages
+                    st.rerun()
                     
                 except Exception as e:
                     error_msg = f"Error: {str(e)}"

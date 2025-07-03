@@ -1,476 +1,545 @@
-#!/usr/bin/env python3
 """
-Multi-Agent System Example - Strands Agents SDK
-
-This example demonstrates how to create a multi-agent system where different
-agents specialize in different tasks and can collaborate to solve complex problems.
-
-Prerequisites:
-- AWS credentials configured (for default Bedrock model provider)
-- Claude 3.7 Sonnet model access enabled in AWS Bedrock (us-west-2 region)
+Multi-Agent System - Collaborative agent system using Strands SDK
+Demonstrates multi-agent coordination and task delegation
 """
 
 import os
-import logging
+import sys
 import json
-from typing import Dict, List, Any
-from dotenv import load_dotenv
-from strands import Agent, tool
+import math
+from pathlib import Path
+from datetime import datetime
+from typing import Dict, Any, Optional, List
+import logging
 
-# Load environment variables
-load_dotenv()
+# Add project root to path
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
+
+try:
+    import boto3
+    from botocore.exceptions import ClientError, NoCredentialsError
+except ImportError:
+    print("Warning: boto3 not installed. Install with: pip install boto3")
+    boto3 = None
 
 # Configure logging
-logging.basicConfig(
-    level=getattr(logging, os.getenv('LOG_LEVEL', 'INFO')),
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
-# Specialized tools for different agents
-@tool
-def calculate_math(expression: str) -> Dict[str, Any]:
-    """Perform mathematical calculations safely.
+class MathTool:
+    """Mathematical calculation tool"""
     
-    Evaluates mathematical expressions using safe evaluation.
-    Supports basic arithmetic, powers, and common math functions.
-    
-    Args:
-        expression: Mathematical expression to evaluate
-        
-    Returns:
-        Dictionary containing calculation result and metadata
-    """
-    import math
-    
-    # Safe evaluation context with math functions
-    safe_dict = {
-        "__builtins__": {},
-        "abs": abs, "round": round, "min": min, "max": max,
-        "sum": sum, "pow": pow,
-        "sqrt": math.sqrt, "sin": math.sin, "cos": math.cos, "tan": math.tan,
-        "log": math.log, "log10": math.log10, "exp": math.exp,
-        "pi": math.pi, "e": math.e
-    }
-    
-    try:
-        result = eval(expression, safe_dict)
-        return {
-            "success": True,
-            "expression": expression,
-            "result": result,
-            "type": type(result).__name__
+    @staticmethod
+    def calculate_math(expression: str) -> Dict[str, Any]:
+        """Perform mathematical calculations safely"""
+        # Safe evaluation context with math functions
+        safe_dict = {
+            "__builtins__": {},
+            "abs": abs, "round": round, "min": min, "max": max,
+            "sum": sum, "pow": pow,
+            "sqrt": math.sqrt, "sin": math.sin, "cos": math.cos, "tan": math.tan,
+            "log": math.log, "log10": math.log10, "exp": math.exp,
+            "pi": math.pi, "e": math.e
         }
-    except Exception as e:
-        return {
-            "success": False,
-            "expression": expression,
-            "error": str(e)
-        }
-
-
-@tool
-def analyze_text_content(text: str) -> Dict[str, Any]:
-    """Analyze text content for various metrics and insights.
-    
-    Provides comprehensive text analysis including readability,
-    sentiment indicators, and structural analysis.
-    
-    Args:
-        text: Text content to analyze
         
-    Returns:
-        Dictionary containing text analysis results
-    """
-    words = text.split()
-    sentences = [s.strip() for s in text.split('.') if s.strip()]
-    paragraphs = [p.strip() for p in text.split('\n\n') if p.strip()]
-    
-    # Basic metrics
-    word_count = len(words)
-    sentence_count = len(sentences)
-    paragraph_count = len(paragraphs)
-    char_count = len(text)
-    
-    # Average metrics
-    avg_words_per_sentence = word_count / sentence_count if sentence_count > 0 else 0
-    avg_chars_per_word = char_count / word_count if word_count > 0 else 0
-    
-    # Word frequency analysis
-    word_freq = {}
-    for word in words:
-        clean_word = word.lower().strip('.,!?;:"()[]{}')
-        if clean_word and len(clean_word) > 2:  # Ignore very short words
-            word_freq[clean_word] = word_freq.get(clean_word, 0) + 1
-    
-    # Most common words
-    most_common = sorted(word_freq.items(), key=lambda x: x[1], reverse=True)[:10]
-    
-    # Simple sentiment indicators (basic keyword matching)
-    positive_words = ['good', 'great', 'excellent', 'amazing', 'wonderful', 'fantastic', 'love', 'like', 'happy', 'joy']
-    negative_words = ['bad', 'terrible', 'awful', 'hate', 'dislike', 'sad', 'angry', 'frustrated', 'disappointed']
-    
-    text_lower = text.lower()
-    positive_count = sum(1 for word in positive_words if word in text_lower)
-    negative_count = sum(1 for word in negative_words if word in text_lower)
-    
-    sentiment_score = positive_count - negative_count
-    if sentiment_score > 0:
-        sentiment = "positive"
-    elif sentiment_score < 0:
-        sentiment = "negative"
-    else:
-        sentiment = "neutral"
-    
-    return {
-        "word_count": word_count,
-        "sentence_count": sentence_count,
-        "paragraph_count": paragraph_count,
-        "character_count": char_count,
-        "avg_words_per_sentence": round(avg_words_per_sentence, 2),
-        "avg_chars_per_word": round(avg_chars_per_word, 2),
-        "most_common_words": most_common,
-        "sentiment": sentiment,
-        "sentiment_score": sentiment_score,
-        "readability_estimate": "easy" if avg_words_per_sentence < 15 else "moderate" if avg_words_per_sentence < 25 else "difficult"
-    }
-
-
-@tool
-def format_data(data: Any, format_type: str = "json") -> Dict[str, Any]:
-    """Format data in various formats for presentation.
-    
-    Converts data to different formats for better readability and presentation.
-    
-    Args:
-        data: Data to format (can be dict, list, or string)
-        format_type: Format type (json, table, list, summary)
-        
-    Returns:
-        Dictionary containing formatted data and metadata
-    """
-    try:
-        if format_type.lower() == "json":
-            if isinstance(data, str):
-                # Try to parse as JSON first
-                try:
-                    parsed_data = json.loads(data)
-                    formatted = json.dumps(parsed_data, indent=2, sort_keys=True)
-                except json.JSONDecodeError:
-                    formatted = json.dumps({"text": data}, indent=2)
-            else:
-                formatted = json.dumps(data, indent=2, sort_keys=True, default=str)
-            
+        try:
+            result = eval(expression, safe_dict)
             return {
                 "success": True,
-                "format": "json",
-                "formatted_data": formatted,
-                "original_type": type(data).__name__
+                "expression": expression,
+                "result": result,
+                "type": type(result).__name__
             }
-        
-        elif format_type.lower() == "table":
-            if isinstance(data, list) and data and isinstance(data[0], dict):
-                # Format as table for list of dictionaries
-                headers = list(data[0].keys())
-                table = "| " + " | ".join(headers) + " |\n"
-                table += "| " + " | ".join(["-" * len(h) for h in headers]) + " |\n"
-                
-                for row in data:
-                    values = [str(row.get(h, "")) for h in headers]
-                    table += "| " + " | ".join(values) + " |\n"
-                
-                formatted = table
-            else:
-                formatted = str(data)
-            
-            return {
-                "success": True,
-                "format": "table",
-                "formatted_data": formatted,
-                "original_type": type(data).__name__
-            }
-        
-        elif format_type.lower() == "list":
-            if isinstance(data, (list, tuple)):
-                formatted = "\n".join([f"• {item}" for item in data])
-            elif isinstance(data, dict):
-                formatted = "\n".join([f"• {k}: {v}" for k, v in data.items()])
-            else:
-                formatted = f"• {data}"
-            
-            return {
-                "success": True,
-                "format": "list",
-                "formatted_data": formatted,
-                "original_type": type(data).__name__
-            }
-        
-        else:
+        except Exception as e:
             return {
                 "success": False,
-                "error": f"Unsupported format type: {format_type}",
-                "supported_formats": ["json", "table", "list"]
+                "expression": expression,
+                "error": str(e)
             }
+
+class TextAnalysisTool:
+    """Text analysis tool"""
     
-    except Exception as e:
+    @staticmethod
+    def analyze_text_content(text: str) -> Dict[str, Any]:
+        """Analyze text content for various metrics and insights"""
+        words = text.split()
+        sentences = [s.strip() for s in text.split('.') if s.strip()]
+        paragraphs = [p.strip() for p in text.split('\n\n') if p.strip()]
+        
+        # Basic metrics
+        word_count = len(words)
+        sentence_count = len(sentences)
+        paragraph_count = len(paragraphs)
+        char_count = len(text)
+        
+        # Average metrics
+        avg_words_per_sentence = word_count / sentence_count if sentence_count > 0 else 0
+        avg_chars_per_word = char_count / word_count if word_count > 0 else 0
+        
+        # Word frequency analysis
+        word_freq = {}
+        for word in words:
+            clean_word = word.lower().strip('.,!?;:"()[]{}')
+            if clean_word and len(clean_word) > 2:
+                word_freq[clean_word] = word_freq.get(clean_word, 0) + 1
+        
+        # Most common words
+        most_common = sorted(word_freq.items(), key=lambda x: x[1], reverse=True)[:10]
+        
+        # Simple sentiment indicators
+        positive_words = ['good', 'great', 'excellent', 'amazing', 'wonderful', 'fantastic', 'love', 'like', 'happy', 'joy']
+        negative_words = ['bad', 'terrible', 'awful', 'hate', 'dislike', 'sad', 'angry', 'frustrated', 'disappointed']
+        
+        text_lower = text.lower()
+        positive_count = sum(1 for word in positive_words if word in text_lower)
+        negative_count = sum(1 for word in negative_words if word in text_lower)
+        
+        sentiment_score = positive_count - negative_count
+        if sentiment_score > 0:
+            sentiment = "positive"
+        elif sentiment_score < 0:
+            sentiment = "negative"
+        else:
+            sentiment = "neutral"
+        
         return {
-            "success": False,
-            "error": str(e),
-            "format": format_type
+            "word_count": word_count,
+            "sentence_count": sentence_count,
+            "paragraph_count": paragraph_count,
+            "character_count": char_count,
+            "avg_words_per_sentence": round(avg_words_per_sentence, 2),
+            "avg_chars_per_word": round(avg_chars_per_word, 2),
+            "most_common_words": most_common,
+            "sentiment": sentiment,
+            "sentiment_score": sentiment_score,
+            "readability_estimate": "easy" if avg_words_per_sentence < 15 else "moderate" if avg_words_per_sentence < 25 else "difficult"
         }
 
-
-class MultiAgentSystem:
-    """Multi-agent system that coordinates specialized agents."""
+class DataFormattingTool:
+    """Data formatting tool"""
     
-    def __init__(self):
-        """Initialize the multi-agent system with specialized agents."""
-        
-        # Math Specialist Agent
-        self.math_agent = Agent(
-            tools=[calculate_math],
-            system_prompt="""You are a mathematics specialist agent. Your expertise is in:
-            - Performing accurate mathematical calculations
-            - Solving equations and mathematical problems
-            - Explaining mathematical concepts
-            - Working with numbers, formulas, and mathematical expressions
-            
-            When given mathematical tasks, use your calculate_math tool to provide precise results.
-            Always show your work and explain the mathematical reasoning."""
-        )
-        
-        # Text Analysis Specialist Agent
-        self.text_agent = Agent(
-            tools=[analyze_text_content],
-            system_prompt="""You are a text analysis specialist agent. Your expertise is in:
-            - Analyzing text content for various metrics
-            - Providing insights about readability and structure
-            - Identifying patterns in text
-            - Offering writing and content improvement suggestions
-            
-            When given text analysis tasks, use your analyze_text_content tool to provide comprehensive insights.
-            Always explain what the metrics mean and provide actionable recommendations."""
-        )
-        
-        # Data Formatting Specialist Agent
-        self.format_agent = Agent(
-            tools=[format_data],
-            system_prompt="""You are a data formatting specialist agent. Your expertise is in:
-            - Converting data between different formats
-            - Making data more readable and presentable
-            - Structuring information for better understanding
-            - Creating well-formatted outputs
-            
-            When given formatting tasks, use your format_data tool to present information clearly.
-            Always choose the most appropriate format for the given data and context."""
-        )
-        
-        # Coordinator Agent (uses other agents as tools)
-        self.coordinator = Agent(
-            system_prompt="""You are a coordinator agent that manages a team of specialist agents:
-            
-            1. Math Agent: Handles mathematical calculations and problems
-            2. Text Agent: Analyzes text content and provides writing insights
-            3. Format Agent: Formats data and makes it more presentable
-            
-            When users request complex tasks that involve multiple specialties:
-            1. Break down the task into components
-            2. Identify which specialist agents are needed
-            3. Coordinate the work between agents
-            4. Synthesize the results into a comprehensive response
-            
-            You don't have direct access to the specialist tools, but you can describe what each agent would do
-            and coordinate their efforts conceptually."""
-        )
-    
-    def process_with_specialist(self, task: str, agent_type: str) -> Dict[str, Any]:
-        """Process a task with a specific specialist agent.
-        
-        Args:
-            task: Task description
-            agent_type: Type of agent ('math', 'text', 'format')
-            
-        Returns:
-            Dictionary containing agent response and metadata
-        """
+    @staticmethod
+    def format_data(data: Any, format_type: str = "json") -> Dict[str, Any]:
+        """Format data in various formats for presentation"""
         try:
-            if agent_type == 'math':
-                response = self.math_agent(task)
-                agent_name = "Math Specialist"
-            elif agent_type == 'text':
-                response = self.text_agent(task)
-                agent_name = "Text Analysis Specialist"
-            elif agent_type == 'format':
-                response = self.format_agent(task)
-                agent_name = "Data Formatting Specialist"
+            if format_type.lower() == "json":
+                if isinstance(data, str):
+                    try:
+                        parsed_data = json.loads(data)
+                        formatted = json.dumps(parsed_data, indent=2, sort_keys=True)
+                    except json.JSONDecodeError:
+                        formatted = json.dumps({"text": data}, indent=2)
+                else:
+                    formatted = json.dumps(data, indent=2, sort_keys=True, default=str)
+                
+                return {
+                    "success": True,
+                    "format": "json",
+                    "formatted_data": formatted,
+                    "original_type": type(data).__name__
+                }
+            
+            elif format_type.lower() == "table":
+                if isinstance(data, list) and data and isinstance(data[0], dict):
+                    headers = list(data[0].keys())
+                    table = "| " + " | ".join(headers) + " |\n"
+                    table += "| " + " | ".join(["-" * len(h) for h in headers]) + " |\n"
+                    
+                    for row in data:
+                        values = [str(row.get(h, "")) for h in headers]
+                        table += "| " + " | ".join(values) + " |\n"
+                    
+                    formatted = table
+                else:
+                    formatted = str(data)
+                
+                return {
+                    "success": True,
+                    "format": "table",
+                    "formatted_data": formatted,
+                    "original_type": type(data).__name__
+                }
+            
+            elif format_type.lower() == "list":
+                if isinstance(data, (list, tuple)):
+                    formatted = "\n".join([f"• {item}" for item in data])
+                elif isinstance(data, dict):
+                    formatted = "\n".join([f"• {k}: {v}" for k, v in data.items()])
+                else:
+                    formatted = f"• {data}"
+                
+                return {
+                    "success": True,
+                    "format": "list",
+                    "formatted_data": formatted,
+                    "original_type": type(data).__name__
+                }
+            
             else:
                 return {
                     "success": False,
-                    "error": f"Unknown agent type: {agent_type}",
-                    "available_types": ["math", "text", "format"]
+                    "error": f"Unsupported format type: {format_type}",
+                    "supported_formats": ["json", "table", "list"]
                 }
-            
-            return {
-                "success": True,
-                "agent": agent_name,
-                "response": str(response),
-                "metrics": {
-                    "stop_reason": response.stop_reason,
-                    "processing_time": response.metrics.total_time_seconds,
-                    "tool_calls": response.metrics.tool_calls
-                }
-            }
-            
+        
         except Exception as e:
             return {
                 "success": False,
                 "error": str(e),
-                "agent_type": agent_type
+                "format": format_type
             }
+
+class MultiAgentSystem:
+    """
+    Multi-agent system that coordinates specialized agents for complex tasks
+    """
     
-    def coordinate_complex_task(self, task: str) -> Dict[str, Any]:
-        """Coordinate a complex task that may require multiple agents.
+    def __init__(self, model_config: Optional[Dict[str, Any]] = None):
+        """Initialize the multi-agent system"""
+        self.model_config = model_config or {
+            "provider": "AWS Bedrock",
+            "model": "us.anthropic.claude-3-7-sonnet-20250219-v1:0",
+            "temperature": 0.7,
+            "max_tokens": 1200
+        }
         
-        Args:
-            task: Complex task description
-            
-        Returns:
-            Dictionary containing coordination results
-        """
+        self.conversation_history = []
+        self.task_history = []
+        self.bedrock_client = None
+        
+        # Initialize tools
+        self.math_tool = MathTool()
+        self.text_tool = TextAnalysisTool()
+        self.format_tool = DataFormattingTool()
+        
+        # Initialize Bedrock client if using AWS
+        if self.model_config.get("provider") == "AWS Bedrock":
+            self._init_bedrock_client()
+    
+    def _init_bedrock_client(self):
+        """Initialize AWS Bedrock client"""
         try:
-            # Use coordinator to plan the approach
-            coordination_response = self.coordinator(f"""
-            I need to coordinate the following complex task: {task}
+            if boto3:
+                self.bedrock_client = boto3.client(
+                    'bedrock-runtime',
+                    region_name=os.getenv('AWS_DEFAULT_REGION', 'us-east-1')
+                )
+                logger.info("✅ AWS Bedrock client initialized successfully")
+            else:
+                logger.warning("⚠️ boto3 not available, using mock responses")
+        except NoCredentialsError:
+            logger.error("❌ AWS credentials not found. Please configure AWS CLI or set environment variables")
+        except Exception as e:
+            logger.error(f"❌ Error initializing Bedrock client: {str(e)}")
+    
+    def chat(self, user_input: str) -> str:
+        """Process multi-agent requests"""
+        try:
+            # Add user message to history
+            self.conversation_history.append({
+                "role": "user",
+                "content": user_input
+            })
             
-            Please analyze this task and:
-            1. Identify which specialist agents would be needed
-            2. Break down the task into components for each agent
-            3. Suggest the order of operations
-            4. Explain how the results should be combined
-            """)
+            # Analyze the task and determine which agents are needed
+            task_analysis = self._analyze_task(user_input)
             
-            return {
-                "success": True,
-                "task": task,
-                "coordination_plan": str(coordination_response),
-                "coordinator_metrics": {
-                    "stop_reason": coordination_response.stop_reason,
-                    "processing_time": coordination_response.metrics.total_time_seconds
-                }
-            }
+            # Execute the task using appropriate agents
+            response = self._execute_multi_agent_task(user_input, task_analysis)
+            
+            # Add response to history
+            self.conversation_history.append({
+                "role": "assistant",
+                "content": response
+            })
+            
+            return response
             
         except Exception as e:
-            return {
-                "success": False,
-                "error": str(e),
-                "task": task
-            }
-
-
-def main():
-    """Demonstrate multi-agent system capabilities."""
+            error_msg = f"Error in multi-agent processing: {str(e)}"
+            logger.error(error_msg)
+            return f"❌ {error_msg}"
     
-    print("🤖 Creating multi-agent system...")
+    def _analyze_task(self, user_input: str) -> Dict[str, Any]:
+        """Analyze the task to determine which agents are needed"""
+        user_lower = user_input.lower()
+        
+        analysis = {
+            "needs_math": False,
+            "needs_text_analysis": False,
+            "needs_formatting": False,
+            "complexity": "simple",
+            "agents_required": []
+        }
+        
+        # Check for mathematical operations
+        math_keywords = ['calculate', 'compute', 'math', 'equation', 'formula', 'sqrt', 'square', 'root', 'power', '+', '-', '*', '/', 'sum', 'average']
+        if any(keyword in user_lower for keyword in math_keywords):
+            analysis["needs_math"] = True
+            analysis["agents_required"].append("Math Specialist")
+        
+        # Check for text analysis needs
+        text_keywords = ['analyze', 'sentiment', 'text', 'content', 'words', 'readability', 'writing', 'review', 'feedback']
+        if any(keyword in user_lower for keyword in text_keywords):
+            analysis["needs_text_analysis"] = True
+            analysis["agents_required"].append("Text Analysis Specialist")
+        
+        # Check for formatting needs
+        format_keywords = ['format', 'json', 'table', 'list', 'structure', 'organize', 'present']
+        if any(keyword in user_lower for keyword in format_keywords):
+            analysis["needs_formatting"] = True
+            analysis["agents_required"].append("Data Formatting Specialist")
+        
+        # Determine complexity
+        if len(analysis["agents_required"]) > 1:
+            analysis["complexity"] = "complex"
+        elif len(analysis["agents_required"]) == 1:
+            analysis["complexity"] = "moderate"
+        
+        return analysis
     
-    try:
-        # Initialize multi-agent system
-        mas = MultiAgentSystem()
+    def _execute_multi_agent_task(self, user_input: str, task_analysis: Dict[str, Any]) -> str:
+        """Execute the task using multiple agents"""
+        results = []
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         
-        print("✅ Multi-agent system created successfully!")
-        print("🎯 Available specialist agents:")
-        print("   - Math Specialist: Mathematical calculations and problem solving")
-        print("   - Text Analysis Specialist: Text content analysis and insights")
-        print("   - Data Formatting Specialist: Data formatting and presentation")
-        print("   - Coordinator: Task coordination and planning")
+        response = f"""🤖 **Multi-Agent System Response**
+
+**Task:** {user_input}
+**Analysis:** {task_analysis['complexity'].title()} task requiring {len(task_analysis['agents_required'])} specialist(s)
+**Agents Deployed:** {', '.join(task_analysis['agents_required'])}
+**Processing Time:** {timestamp}
+
+---
+
+"""
         
-        print("\n" + "="*70)
-        print("🔬 Testing individual specialist agents")
-        print("="*70)
+        # Execute math operations if needed
+        if task_analysis["needs_math"]:
+            math_result = self._execute_math_agent(user_input)
+            results.append(math_result)
+            response += f"""🧮 **Math Specialist Results:**
+{math_result}
+
+"""
         
-        # Test individual specialists
-        specialist_tests = [
-            ("math", "Calculate the compound interest for $1000 invested at 5% annual rate for 3 years using the formula A = P(1 + r)^t"),
-            ("text", "Analyze this product review: 'This product is absolutely amazing! I love how easy it is to use and the quality is fantastic. Highly recommended for anyone looking for a reliable solution.'"),
-            ("format", "Format this data as a JSON: Name: John Doe, Age: 30, City: New York, Hobbies: reading, swimming, cooking")
-        ]
+        # Execute text analysis if needed
+        if task_analysis["needs_text_analysis"]:
+            text_result = self._execute_text_agent(user_input)
+            results.append(text_result)
+            response += f"""📊 **Text Analysis Specialist Results:**
+{text_result}
+
+"""
         
-        for agent_type, task in specialist_tests:
-            print(f"\n🎯 {agent_type.upper()} Agent Task: {task}")
-            print("-" * 60)
+        # Execute formatting if needed
+        if task_analysis["needs_formatting"]:
+            format_result = self._execute_format_agent(user_input, results)
+            response += f"""📋 **Data Formatting Specialist Results:**
+{format_result}
+
+"""
+        
+        # If no specific agents were triggered, provide general coordination
+        if not task_analysis["agents_required"]:
+            response += self._general_coordination_response(user_input)
+        
+        # Add task summary
+        response += f"""---
+
+**🎯 Task Summary:**
+• **Agents Used:** {len(task_analysis['agents_required'])}
+• **Complexity Level:** {task_analysis['complexity'].title()}
+• **Processing Status:** ✅ Complete
+• **Results Generated:** {len(results)} specialist outputs
+
+*This demonstrates multi-agent collaboration where specialized agents work together to solve complex tasks.*"""
+        
+        # Log the task
+        self.task_history.append({
+            "task": user_input,
+            "analysis": task_analysis,
+            "results_count": len(results),
+            "timestamp": timestamp
+        })
+        
+        return response
+    
+    def _execute_math_agent(self, user_input: str) -> str:
+        """Execute mathematical operations"""
+        try:
+            # Extract mathematical expressions from the input
+            import re
             
-            result = mas.process_with_specialist(task, agent_type)
+            # Look for mathematical expressions
+            math_patterns = [
+                r'(\d+(?:\.\d+)?\s*[\+\-\*\/\^]\s*\d+(?:\.\d+)?)',
+                r'sqrt\(\s*\d+(?:\.\d+)?\s*\)',
+                r'(\d+(?:\.\d+)?)\s*\^\s*(\d+(?:\.\d+)?)',
+                r'square\s+root\s+of\s+(\d+(?:\.\d+)?)'
+            ]
             
-            if result["success"]:
-                print(f"🤖 {result['agent']}: {result['response']}")
-                print(f"\n📊 Agent metrics:")
-                print(f"   - Processing time: {result['metrics']['processing_time']:.2f}s")
-                print(f"   - Tool calls: {result['metrics']['tool_calls']}")
+            expressions_found = []
+            for pattern in math_patterns:
+                matches = re.findall(pattern, user_input.lower())
+                expressions_found.extend(matches)
+            
+            if expressions_found:
+                results = []
+                for expr in expressions_found[:3]:  # Limit to 3 expressions
+                    if isinstance(expr, tuple):
+                        expr = expr[0] if expr[0] else str(expr)
+                    
+                    # Clean up the expression
+                    expr = str(expr).replace('^', '**').replace('sqrt(', 'math.sqrt(')
+                    
+                    calc_result = self.math_tool.calculate_math(expr)
+                    if calc_result["success"]:
+                        results.append(f"• {calc_result['expression']} = **{calc_result['result']}**")
+                    else:
+                        results.append(f"• {expr}: Error - {calc_result['error']}")
+                
+                return "\n".join(results) if results else "No valid mathematical expressions found."
             else:
-                print(f"❌ Error: {result['error']}")
-        
-        print("\n" + "="*70)
-        print("🎭 Testing complex task coordination")
-        print("="*70)
-        
-        # Test complex task coordination
-        complex_tasks = [
-            "I need to analyze a business report that contains financial data and text. The report shows revenue of $150,000 with 15% growth, and includes customer feedback. I want to calculate the previous year's revenue, analyze the sentiment of the feedback, and format everything in a professional presentation format.",
-            "Help me process survey data: 50 responses with average satisfaction score of 4.2/5, and this comment: 'The service was good but could be improved in terms of speed and efficiency.' I need mathematical analysis of the scores and text analysis of the comment, then format the results clearly.",
-        ]
-        
-        for i, task in enumerate(complex_tasks, 1):
-            print(f"\n🎯 Complex Task {i}: {task}")
-            print("-" * 60)
-            
-            coordination_result = mas.coordinate_complex_task(task)
-            
-            if coordination_result["success"]:
-                print(f"🎭 Coordinator Plan: {coordination_result['coordination_plan']}")
-                print(f"\n📊 Coordination metrics:")
-                print(f"   - Planning time: {coordination_result['coordinator_metrics']['processing_time']:.2f}s")
-            else:
-                print(f"❌ Coordination error: {coordination_result['error']}")
-        
-        print("\n" + "="*70)
-        print("🔧 Direct tool demonstrations")
-        print("="*70)
-        
-        # Direct tool usage examples
-        print("\n📞 Direct math calculation:")
-        math_result = mas.math_agent.tool.calculate_math(expression="sqrt(144) + 10^2")
-        print(f"   Result: {math_result}")
-        
-        print("\n📞 Direct text analysis:")
-        text_result = mas.text_agent.tool.analyze_text_content(
-            text="Artificial intelligence is revolutionizing the way we work. It's amazing how quickly technology advances!"
-        )
-        print(f"   Analysis: {text_result}")
-        
-        print("\n📞 Direct data formatting:")
-        format_result = mas.format_agent.tool.format_data(
-            data={"name": "Alice", "score": 95, "grade": "A"}, 
-            format_type="json"
-        )
-        print(f"   Formatted: {format_result}")
-        
-    except Exception as e:
-        logger.error(f"Error in multi-agent system: {e}")
-        print(f"\n❌ Error: {e}")
-        print("\n💡 Make sure you have:")
-        print("   1. AWS credentials configured")
-        print("   2. Claude 3.7 Sonnet model access enabled in AWS Bedrock")
-        return 1
+                # Handle word problems or general math requests
+                if "square root" in user_input.lower():
+                    numbers = re.findall(r'\d+(?:\.\d+)?', user_input)
+                    if numbers:
+                        num = float(numbers[0])
+                        result = self.math_tool.calculate_math(f"sqrt({num})")
+                        if result["success"]:
+                            return f"• √{num} = **{result['result']}**"
+                
+                return "Mathematical analysis requested - please provide specific numbers or expressions to calculate."
+                
+        except Exception as e:
+            return f"Math processing error: {str(e)}"
     
-    print("\n✨ Multi-agent system example completed!")
-    return 0
+    def _execute_text_agent(self, user_input: str) -> str:
+        """Execute text analysis operations"""
+        try:
+            # Extract text to analyze (look for quoted text or use the entire input)
+            import re
+            
+            # Look for quoted text first
+            quoted_text = re.findall(r'"([^"]*)"', user_input)
+            if quoted_text:
+                text_to_analyze = quoted_text[0]
+            else:
+                # Use the input itself if no quoted text found
+                text_to_analyze = user_input
+            
+            analysis_result = self.text_tool.analyze_text_content(text_to_analyze)
+            
+            result = f"""**Text Analysis Results:**
+• **Word Count:** {analysis_result['word_count']}
+• **Sentence Count:** {analysis_result['sentence_count']}
+• **Character Count:** {analysis_result['character_count']}
+• **Average Words/Sentence:** {analysis_result['avg_words_per_sentence']}
+• **Readability:** {analysis_result['readability_estimate'].title()}
+• **Sentiment:** {analysis_result['sentiment'].title()} (score: {analysis_result['sentiment_score']})
 
+**Most Common Words:**"""
+            
+            for word, count in analysis_result['most_common_words'][:5]:
+                result += f"\n• '{word}': {count} times"
+            
+            return result
+            
+        except Exception as e:
+            return f"Text analysis error: {str(e)}"
+    
+    def _execute_format_agent(self, user_input: str, previous_results: List[str]) -> str:
+        """Execute data formatting operations"""
+        try:
+            # Determine what to format
+            if previous_results:
+                # Format the results from other agents
+                data_to_format = {
+                    "task": user_input,
+                    "results": previous_results,
+                    "timestamp": datetime.now().isoformat()
+                }
+                format_type = "json"
+            else:
+                # Look for data in the user input
+                data_to_format = {"user_request": user_input}
+                format_type = "json"
+            
+            # Check if user specified a format
+            user_lower = user_input.lower()
+            if "table" in user_lower:
+                format_type = "table"
+            elif "list" in user_lower:
+                format_type = "list"
+            
+            format_result = self.format_tool.format_data(data_to_format, format_type)
+            
+            if format_result["success"]:
+                return f"""**Formatted Output ({format_type.upper()}):**
+```{format_type}
+{format_result['formatted_data']}
+```"""
+            else:
+                return f"Formatting error: {format_result['error']}"
+                
+        except Exception as e:
+            return f"Formatting error: {str(e)}"
+    
+    def _general_coordination_response(self, user_input: str) -> str:
+        """Provide general coordination response when no specific agents are triggered"""
+        return f"""🎭 **General Coordination Response:**
 
-def create_multi_agent_system(model_config: Dict[str, Any] = None) -> MultiAgentSystem:
+I've analyzed your request: "{user_input}"
+
+As a multi-agent coordinator, I can deploy specialized agents for:
+• **🧮 Mathematical Operations** - Calculations, equations, formulas
+• **📊 Text Analysis** - Content analysis, sentiment, readability
+• **📋 Data Formatting** - JSON, tables, structured output
+• **🔍 Research Tasks** - Information gathering and synthesis
+• **📁 File Operations** - Document management and processing
+
+To get the most from the multi-agent system, try requests like:
+- "Calculate the compound interest and format the results"
+- "Analyze this text and present findings in a table"
+- "Research Python libraries and create a comparison"
+
+*Provide more specific instructions to activate specialized agents.*"""
+
+def create_multi_agent_system(model_config: Optional[Dict[str, Any]] = None) -> MultiAgentSystem:
     """Factory function to create a Multi Agent System"""
     return MultiAgentSystem(model_config)
 
+def main():
+    """Test the Multi Agent System"""
+    print("🤖 Testing Multi-Agent System...")
+    
+    try:
+        mas = create_multi_agent_system()
+        
+        test_queries = [
+            "Calculate the square root of 144 and analyze the result",
+            "Analyze this text: 'This is a great product with excellent quality!' and format the results",
+            "What is 25 * 47 + 100?",
+            "Help me plan a Python learning roadmap with timeline and resources"
+        ]
+        
+        for query in test_queries:
+            print(f"\n{'='*60}")
+            print(f"Query: {query}")
+            print('='*60)
+            response = mas.chat(query)
+            print(response)
+        
+        print(f"\n✅ Multi-Agent System test completed!")
+        
+    except Exception as e:
+        print(f"❌ Error testing Multi-Agent System: {str(e)}")
+        return 1
+    
+    return 0
 
 if __name__ == "__main__":
     exit(main())
