@@ -38,29 +38,97 @@ class AgentRunner:
     def run_agent(self, agent_type: str, model_config: Dict[str, Any], user_input: str = "") -> str:
         """Run the specified agent with given configuration"""
         try:
+            # Show real system thinking process
+            thinking_process = f"""🧠 **System Thinking Process:**
+```
+1. Received query: "{user_input}"
+2. Selected agent type: {agent_type}
+3. Model configuration: {model_config.get('provider')} - {model_config.get('model')}
+4. Checking agent availability...
+```
+
+"""
+            
             if not AGENTS_AVAILABLE:
-                return self._fallback_response(agent_type, model_config, user_input)
+                thinking_process += f"""**🔄 Agent Loading Process:**
+- Real agents not available, using fallback demonstrations
+- This shows how the system would work with full agent implementations
+- Fallback responses demonstrate expected tool usage patterns
+
+"""
+                return thinking_process + self._fallback_response(agent_type, model_config, user_input)
             
             # Get or create agent instance
             agent_key = f"{agent_type}_{id(model_config)}"
             
+            thinking_process += f"""**🔄 Agent Loading Process:**
+- Agent key: {agent_key}
+- Checking loaded agents cache...
+"""
+            
             if agent_key not in self.loaded_agents:
+                thinking_process += f"""- Agent not in cache, creating new instance
+- Calling create_agent() for {agent_type}
+- Initializing with model config: {model_config}
+"""
                 agent = self._create_agent(agent_type, model_config)
                 if agent:
                     self.loaded_agents[agent_key] = agent
+                    thinking_process += f"""- ✅ Agent created successfully
+- Agent cached for future use
+"""
                 else:
-                    return f"❌ Failed to create {agent_type}"
+                    return thinking_process + f"\n❌ Failed to create {agent_type}"
+            else:
+                thinking_process += f"""- ✅ Agent found in cache, reusing existing instance
+"""
             
             agent = self.loaded_agents[agent_key]
             
+            thinking_process += f"""
+**🤖 Agent Execution Process:**
+- Agent type: {agent.__class__.__name__ if hasattr(agent, '__class__') else 'Unknown'}
+- Method: {'chat()' if user_input else 'status()'}
+- Input length: {len(user_input)} characters
+"""
+            
             # Use the agent's chat method
             if hasattr(agent, 'chat') and user_input:
-                return agent.chat(user_input)
+                thinking_process += f"""- Calling agent.chat() with user input
+- Model provider: {model_config.get('provider')}
+- Model name: {model_config.get('model')}
+- Temperature: {model_config.get('temperature')}
+- Max tokens: {model_config.get('max_tokens')}
+
+**🔄 Model API Call Process:**
+- Preparing request to {model_config.get('provider')}
+- Formatting messages for {model_config.get('model')}
+- Sending API request...
+
+"""
+                response = agent.chat(user_input)
+                
+                thinking_process += f"""- ✅ Received response from model
+- Response length: {len(response)} characters
+- Processing complete
+
+**📤 Final Response:**
+"""
+                return thinking_process + response
             else:
                 # Return agent status or welcome message
+                thinking_process += f"""- No user input provided, returning agent status
+- Calling agent.get_status() if available
+
+"""
                 if hasattr(agent, 'get_status'):
                     status = agent.get_status()
-                    return f"""**{agent_type} Ready**
+                    thinking_process += f"""**📊 Agent Status Retrieved:**
+- Status: {status.get('status', 'Unknown')}
+- Configuration: {status.get('model_config', {})}
+
+"""
+                    return thinking_process + f"""**{agent_type} Ready**
 
 Agent initialized and ready to assist!
 
@@ -73,11 +141,26 @@ Agent initialized and ready to assist!
 
 Start chatting to interact with this agent!"""
                 else:
-                    return f"**{agent_type}** is ready! Start chatting to interact."
+                    return thinking_process + f"**{agent_type}** is ready! Start chatting to interact."
                 
         except Exception as e:
             error_trace = traceback.format_exc()
-            return f"""**Error Running {agent_type}:**
+            error_thinking = f"""🧠 **System Error Analysis:**
+```
+1. Error occurred during agent execution
+2. Agent type: {agent_type}
+3. Error type: {type(e).__name__}
+4. Error message: {str(e)}
+5. Full traceback available below
+```
+
+**🔄 Error Handling Process:**
+- Caught exception in run_agent()
+- Generating detailed error report
+- Providing troubleshooting guidance
+
+"""
+            return error_thinking + f"""**Error Running {agent_type}:**
 
 Error: {str(e)}
 
@@ -116,21 +199,30 @@ Error: {str(e)}
     
     def _fallback_response(self, agent_type: str, model_config: Dict[str, Any], user_input: str) -> str:
         """Fallback response when agents are not available"""
+        
+        fallback_thinking = f"""**🔄 Fallback System Process:**
+- Real agent implementations not available
+- Using demonstration responses to show expected behavior
+- This simulates how {agent_type} would process: "{user_input}"
+- Model that would be used: {model_config.get('provider')} - {model_config.get('model')}
+
+"""
+        
         # Static fallback responses for each agent type
         if agent_type == "Simple Agent":
-            return self._simple_agent_fallback(model_config, user_input)
+            return fallback_thinking + self._simple_agent_fallback(model_config, user_input)
         elif agent_type == "Agent with Tools":
-            return self._tools_agent_fallback(model_config, user_input)
+            return fallback_thinking + self._tools_agent_fallback(model_config, user_input)
         elif agent_type == "Custom Tool Agent":
-            return self._custom_tools_fallback(model_config, user_input)
+            return fallback_thinking + self._custom_tools_fallback(model_config, user_input)
         elif agent_type == "Web Research Agent":
-            return self._research_agent_fallback(model_config, user_input)
+            return fallback_thinking + self._research_agent_fallback(model_config, user_input)
         elif agent_type == "File Manager Agent":
-            return self._file_manager_fallback(model_config, user_input)
+            return fallback_thinking + self._file_manager_fallback(model_config, user_input)
         elif agent_type == "Multi Agent System":
-            return self._multi_agent_fallback(model_config, user_input)
+            return fallback_thinking + self._multi_agent_fallback(model_config, user_input)
         else:
-            return f"Unknown agent type: {agent_type}"
+            return fallback_thinking + f"Unknown agent type: {agent_type}"
     
     def _simple_agent_fallback(self, model_config: Dict[str, Any], user_input: str) -> str:
         """Fallback for Simple Agent"""
