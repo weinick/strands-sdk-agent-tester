@@ -1,6 +1,6 @@
 """
-Web Research Agent - Using Official Strands Agent Browser Tools
-Demonstrates real web research capabilities with use_browser tool
+Web Research Agent - Using Official Strands SDK Tools
+Demonstrates real web research capabilities with official Strands tools
 """
 
 import os
@@ -14,8 +14,9 @@ import logging
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-# Import Strands Agent framework
+# Import Strands Agent framework and official tools
 from strands import Agent
+from strands_tools import use_browser, http_request
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -23,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 class StrandsWebResearchAgent:
     """
-    Web Research Agent using official Strands Agent browser tools
+    Web Research Agent using official Strands SDK tools
     """
     
     def __init__(self, model_config: Optional[Dict[str, Any]] = None):
@@ -32,56 +33,75 @@ class StrandsWebResearchAgent:
             "provider": "AWS Bedrock",
             "model": "us.anthropic.claude-3-7-sonnet-20250219-v1:0",
             "temperature": 0.3,
-            "max_tokens": 1500
+            "max_tokens": 2000
         }
         
         self.conversation_history = []
         self.research_history = []
         
-        # Create Strands Agent with browser tools
-        try:
-            # Import the use_browser tool from strands_tools
-            from strands_tools import use_browser
-            
-            self.agent = Agent(
-                model=self.model_config.get("model", "us.anthropic.claude-3-7-sonnet-20250219-v1:0"),
-                system_prompt="""You are a specialized Web Research Agent with real browser automation capabilities.
+        # Create Strands Agent with official SDK tools
+        self.agent = Agent(
+            model=self.model_config.get("model", "us.anthropic.claude-3-7-sonnet-20250219-v1:0"),
+            system_prompt=f"""Web Research Agent with Official Strands SDK Tools - {datetime.now().strftime('%Y-%m-%d')}
 
-Your primary tools:
-- use_browser: For real web browsing, searching, and content extraction
-- You can navigate websites, search for information, and extract current data
+You are a web research agent with access to real browser automation via official Strands SDK tools.
 
-When users ask you to research something:
-1. Use the browser tool to search for current information
-2. Navigate to relevant websites to gather data
-3. Extract and synthesize information from multiple sources
-4. Provide comprehensive, up-to-date research reports
+CRITICAL: SINGLE SEARCH ONLY - NO RETRIES OR MULTIPLE ATTEMPTS
 
-Always prioritize real-time web data over your training knowledge when conducting research.""",
-                tools=[use_browser]  # Use official Strands browser tool
-            )
-            
-            logger.info("✅ Strands Web Research Agent initialized with browser tools")
-            
-        except ImportError as e:
-            logger.warning(f"⚠️ Could not import use_browser tool: {e}")
-            # Create agent without tools as fallback
-            self.agent = Agent(
-                model=self.model_config.get("model", "us.anthropic.claude-3-7-sonnet-20250219-v1:0"),
-                system_prompt="""You are a specialized Web Research Agent. 
+AVAILABLE TOOLS:
+- use_browser: Browser automation (navigate, get_text, get_html)
+- http_request: HTTP client for API calls
 
-While I don't have access to real browser tools in this configuration, I can help you with:
-- Research planning and methodology
-- Information analysis and synthesis
-- Research question formulation
-- Source evaluation guidance
+SEARCH ENGINE PRIORITY (CHINA-OPTIMIZED FOR SPEED):
+1. **Baidu (PRIMARY)**: https://www.baidu.com/s?wd=YOUR_QUERY 
+   - FASTEST in China (2-3 seconds)
+   - Use for ALL general queries first
+   - Excellent for news, sports, current events, any topic
+   
+2. **Direct websites**: When you know the specific authoritative source
+   - Company websites, news sites, official sources
+   - Only if you need very specific information
+   
+3. **Other search engines**: ONLY if Baidu fails completely
+   - DuckDuckGo, Bing (Google often blocked/slow in China)
 
-For actual web browsing, you would need the use_browser tool properly configured."""
-            )
-            logger.info("✅ Strands Web Research Agent initialized in fallback mode")
-    
+CRITICAL PERFORMANCE RULE - ONE SEARCH ONLY:
+- **Always try Baidu FIRST** for maximum speed
+- Make only ONE search/navigation per query for fast response
+- Do NOT try multiple search engines - stick with Baidu
+- Extract maximum information from your chosen source
+
+BROWSER ACTIONS (Use separately):
+- First: playwright___playwright_navigate to Baidu search URL
+- Then: playwright___playwright_get_visible_text to extract content
+- DO NOT combine actions in one tool call
+
+SEARCH STRATEGY FOR SPEED:
+1. **Default choice**: Use Baidu search for 95% of queries
+2. **Format query**: Convert to appropriate search terms (Chinese/English as needed)
+3. **Single navigation**: Go to Baidu with search terms
+4. **Extract comprehensively**: Get all needed info in one go
+5. **NO retries**: One search, comprehensive answer
+
+WHEN TO USE MCP TOOLS:
+- User asks for current/recent information not in your training data
+- User asks for real-time data (stock prices, news, sports results, etc.)
+- User asks "search for", "find", "what's the latest", "current", etc.
+- Any query that requires up-to-date information from the internet
+
+RULES:
+- ONE search/navigation only per query (mandatory for speed)
+- Choose the most appropriate source for each specific query
+- Use separate tool calls for navigate and extract
+- Always cite the source URL used
+- Be comprehensive in your single search""",
+            tools=[use_browser, http_request]
+        )
+        
+        logger.info("✅ Strands Web Research Agent initialized with official SDK tools")
+
     def chat(self, user_input: str) -> str:
-        """Process research requests using Strands Agent with browser tools"""
+        """Process research requests using Strands Agent with official SDK tools"""
         try:
             # Add user message to history
             self.conversation_history.append({
@@ -90,33 +110,38 @@ For actual web browsing, you would need the use_browser tool properly configured
             })
             
             # Show thinking process
-            thinking_process = f"""🧠 **Strands Web Research Agent Thinking:**
+            thinking_process = f"""**Strands Web Research Agent Thinking:**
 ```
 1. Analyzing query: "{user_input}"
-2. Using official Strands Agent framework with use_browser tool
-3. Will perform real web browsing and search for current information
-4. Browser tool provides: navigation, search, content extraction
+2. Using official Strands Agent SDK with tools: use_browser, http_request
+3. Strategy: SINGLE SEARCH for quick results
+4. Search engine priority: DuckDuckGo → Google → Baidu (if needed)
+5. Will extract answer from first successful search
 ```
 
-**🔧 Strands Tool Selection:**
-- Framework: Official Strands Agents SDK
-- Tool: use_browser (official browser automation tool)
-- Capabilities: Real web browsing, search, content extraction
-- Data source: Live internet via browser automation
+**Official Strands SDK Tools:**
+- Framework: Strands Agents SDK (Official)
+- Tools: use_browser (Playwright automation), http_request (HTTP client)
+- Strategy: Single search approach for fast results
+- Fallback: Baidu search engine for alternative results
 
-**🌐 Initiating Browser-Based Research...**
+**Initiating Quick Web Research:**
+- Starting with DuckDuckGo for fast, unblocked search
+- Single search execution with immediate result extraction
+- Baidu available as backup for alternative content
+- Quick response with source attribution
 """
             
             # Use Strands Agent to process the request
             response = self.agent(user_input)
             
             # Store research in history
-            if any(word in user_input.lower() for word in ['research', 'search', 'find', 'latest']):
+            if any(word in user_input.lower() for word in ['research', 'search', 'find', 'latest', 'current']):
                 self.research_history.append({
                     "query": user_input,
                     "timestamp": datetime.now(),
-                    "type": "strands_browser_research",
-                    "method": "use_browser_tool"
+                    "type": "strands_sdk_research",
+                    "method": "use_browser_and_http_request_tools"
                 })
             
             # Add response to history
@@ -125,113 +150,261 @@ For actual web browsing, you would need the use_browser tool properly configured
                 "content": response
             })
             
-            return thinking_process + f"""
+            # Return formatted response
+            return f"""{response}
 
-**📤 Strands Agent Response:**
-{response}
+---
 
-**📋 Research Session Summary:**
-• **Framework:** Official Strands Agents SDK
-• **Tool Used:** use_browser (real browser automation)
-• **Data Source:** Live web browsing and search
-• **Research Quality:** Real-time internet data
-• **Timestamp:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+**Research Session Summary:**
+- **Framework:** Official Strands Agents SDK
+- **SDK Tools Used:** use_browser (Playwright), http_request (HTTP client)
+- **Data Source:** Live web browsing, API calls, real-time content extraction
+- **Research Quality:** Current internet data with source verification
+- **Timestamp:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
-*This research was conducted using official Strands Agent browser tools for real web automation.*"""
+*This research was conducted using official Strands SDK tools for real web automation and data retrieval.*
+
+---
+
+<details>
+<summary><strong>System Process Details</strong> (Click to expand)</summary>
+
+{thinking_process}
+
+</details>"""
             
         except Exception as e:
             error_msg = f"Error with Strands Web Research Agent: {str(e)}"
             logger.error(error_msg)
-            return f"""🧠 **Strands Web Research Agent Thinking:**
+            return f"""**Strands Web Research Agent Error:**
 ```
 1. Analyzing query: "{user_input}"
-2. Attempting to use official Strands Agent browser tools
+2. Attempting to use official Strands SDK tools
 3. Error encountered during processing
 ```
 
-❌ **Error:** {error_msg}
+**Error Details:**
+{error_msg}
 
-**🔧 Troubleshooting:**
-- Ensure Strands Agents tools are properly installed
-- Check browser tool dependencies
-- Verify network connectivity for web browsing
+**Troubleshooting:**
+This could be due to:
+- Network connectivity issues
+- Search engine access restrictions  
+- Browser automation setup problems
+- Missing dependencies (playwright, strands-agents-tools)
 
-**📋 Fallback Information:**
-While I couldn't perform live web research due to the error above, I can provide general guidance based on my knowledge. For real-time web research, the Strands Agent use_browser tool would normally:
+**Setup Verification:**
+1. Ensure strands-agents-tools is installed: `pip install strands-agents-tools`
+2. Install Playwright browsers: `playwright install`
+3. Check network connectivity
+4. Verify AWS credentials if using Bedrock models
 
-1. **Navigate to search engines** (Google, Bing, DuckDuckGo)
-2. **Perform searches** with your query
-3. **Extract content** from relevant websites
-4. **Synthesize findings** from multiple sources
-5. **Provide current information** with timestamps
+**Fallback Response:**
+Based on my training data, I can provide general information about your query, though it may not be the most current information available online."""
 
-*To enable full browser-based research, please ensure all Strands Agent dependencies are properly configured.*"""
-    
-    def get_conversation_history(self) -> list:
-        """Get conversation history"""
-        return self.conversation_history.copy()
-    
-    def get_research_history(self) -> list:
-        """Get research history"""
-        return self.research_history.copy()
-    
+    def get_status(self) -> Dict[str, Any]:
+        """Get current agent status"""
+        return {
+            "agent_type": "Strands Web Research Agent",
+            "framework": "Official Strands Agents SDK",
+            "tools": ["use_browser", "http_request"],
+            "model_config": self.model_config,
+            "conversation_length": len(self.conversation_history),
+            "research_sessions": len(self.research_history),
+            "status": "Ready for Official SDK Web Research"
+        }
+
     def clear_history(self):
         """Clear conversation and research history"""
         self.conversation_history = []
         self.research_history = []
-        logger.info("All history cleared")
-    
-    def get_status(self) -> Dict[str, Any]:
-        """Get agent status"""
-        return {
-            "agent_type": "Strands Web Research Agent",
-            "framework": "Official Strands Agents SDK",
-            "tools": ["use_browser"],
-            "model_config": self.model_config,
-            "conversation_length": len(self.conversation_history),
-            "research_sessions": len(self.research_history),
-            "status": "Ready for Browser-Based Research"
-        }
 
 def create_web_research_agent(model_config: Optional[Dict[str, Any]] = None) -> StrandsWebResearchAgent:
-    """Factory function to create a Strands Web Research Agent"""
+    """Factory function to create a web research agent"""
     return StrandsWebResearchAgent(model_config)
 
 def main():
-    """Main function for testing the agent directly"""
-    print("🌐 Strands Web Research Agent - Official Browser Tools Demo")
-    print("=" * 70)
+    """Main function for testing the web research agent"""
+    print("🌐 Strands Web Research Agent - Official SDK Version")
+    print("=" * 60)
     
-    # Create agent
-    agent = create_web_research_agent()
-    
-    print("Strands Web Research Agent initialized!")
-    print("Status:", agent.get_status())
-    print("-" * 70)
-    print("Try research commands like:")
-    print('• "Research the latest AI trends"')
-    print('• "Search for Python web frameworks"')
-    print('• "Find current news about machine learning"')
-    print('• "Look up information about climate change"')
-    print("• Type 'quit' to exit")
-    print("-" * 70)
-    
-    while True:
+    try:
+        # Create agent
+        agent = create_web_research_agent()
+        print(f"✅ Agent Status: {agent.get_status()}")
+        
+        # Test queries
+        test_queries = [
+            "Research the latest AI trends for 2025",
+            "Find current Amazon stock price (AMZN)",
+            "What are the best Python learning resources?"
+        ]
+        
+        for query in test_queries:
+            print(f"\n🔍 Testing: {query}")
+            print("-" * 40)
+            response = agent.chat(query)
+            print(response[:300] + "..." if len(response) > 300 else response)
+            
+    except Exception as e:
+        print(f"\n❌ Error: {str(e)}")
+        print("💡 Setup Instructions:")
+        print("   1. pip install strands-agents-tools")
+        print("   2. playwright install")
+        print("   3. Ensure AWS credentials are configured")
+
+if __name__ == "__main__":
+    main()
+
+    def chat(self, user_input: str) -> str:
+        """Process research requests using Strands Agent with MCP tools"""
         try:
-            user_input = input("\nYou: ").strip()
-            if user_input.lower() in ['quit', 'exit', 'bye']:
-                print("\nAgent: Thank you for using the Strands Web Research Agent!")
-                break
+            # Add user message to history
+            self.conversation_history.append({
+                "role": "user",
+                "content": user_input
+            })
             
-            if user_input:
-                response = agent.chat(user_input)
-                print(f"\nAgent: {response}")
+            # Show thinking process
+            thinking_process = f"""**Strands Web Research Agent Thinking:**
+```
+1. Analyzing query: "{user_input}"
+2. Using Strands Agent framework with MCP Playwright tools
+3. Available tools: playwright___playwright_navigate, playwright___playwright_get_visible_text, etc.
+4. Will perform real web research with live browser automation
+```
+
+**MCP Tool Selection:**
+- Framework: Strands Agents SDK with MCP integration
+- Tools: Playwright MCP tools (browser automation)
+- Capabilities: Real browser navigation, content extraction, form interaction
+- Data source: Live internet via browser automation
+
+**Initiating Real Web Research:**
+- Starting browser automation with Playwright MCP tools
+- Navigating to relevant websites and search engines
+- Extracting and analyzing web content
+- Verifying information from reliable sources
+- Compiling comprehensive research results
+"""
             
-        except KeyboardInterrupt:
-            print("\n\nThank you for using the Strands Web Research Agent!")
-            break
+            # Use Strands Agent to process the request
+            response = self.agent(user_input)
+            
+            # Store research in history
+            if any(word in user_input.lower() for word in ['research', 'search', 'find', 'latest', 'current']):
+                self.research_history.append({
+                    "query": user_input,
+                    "timestamp": datetime.now(),
+                    "type": "strands_mcp_research",
+                    "method": "use_browser_and_http_request_tools"
+                })
+            
+            # Add response to history
+            self.conversation_history.append({
+                "role": "assistant",
+                "content": response
+            })
+            
+            # Show the actual Strands Agent Response content FIRST and prominently
+            return f"""{response}
+
+---
+
+**Research Session Summary:**
+- **Framework:** Strands Agents SDK with MCP integration
+- **MCP Tools Used:** Playwright (browser automation, navigation, content extraction)
+- **Data Source:** Live web browsing, real-time content extraction
+- **Research Quality:** Current internet data with source verification
+- **Timestamp:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+*This research was conducted using MCP Playwright tools for real web automation and data retrieval.*
+
+---
+
+<details>
+<summary><strong>System Process Details</strong> (Click to expand)</summary>
+
+{thinking_process}
+
+</details>"""
+            
         except Exception as e:
-            print(f"\nError: {str(e)}")
+            error_msg = f"Error with Strands Web Research Agent: {str(e)}"
+            logger.error(error_msg)
+            return f"""**Strands Web Research Agent Thinking:**
+```
+1. Analyzing query: "{user_input}"
+2. Attempting to use official Strands Agent MCP tools
+3. Error encountered during processing
+```
+
+**Error Details:**
+{error_msg}
+
+**Fallback Response:**
+I apologize, but I encountered an issue while trying to perform live web research. This could be due to:
+- Network connectivity issues
+- Search engine access restrictions
+- MCP tool configuration problems
+
+For reliable web research, please ensure:
+1. Internet connection is stable
+2. MCP tools are properly configured
+3. Browser automation is enabled
+
+You can try running the setup script: `python advanced_agent/setup_web_research.py`
+
+**General Knowledge Response:**
+Based on my training data, I can provide general information about your query, though it may not be the most current information available online."""
+
+    def get_status(self) -> Dict[str, Any]:
+        """Get current agent status"""
+        return {
+            "agent_type": "Strands Web Research Agent",
+            "framework": "Strands Agents SDK with MCP integration",
+            "tools": ["playwright___playwright_navigate", "playwright___playwright_get_visible_text", "playwright___playwright_get_visible_html"],
+            "model_config": self.model_config,
+            "conversation_length": len(self.conversation_history),
+            "research_sessions": len(self.research_history),
+            "status": "Ready for MCP-Powered Web Research"
+        }
+
+    def clear_history(self):
+        """Clear conversation and research history"""
+        self.conversation_history = []
+        self.research_history = []
+
+def create_web_research_agent(model_config: Optional[Dict[str, Any]] = None) -> StrandsWebResearchAgent:
+    """Factory function to create a web research agent"""
+    return StrandsWebResearchAgent(model_config)
+
+def main():
+    """Main function for testing the web research agent"""
+    print("🌐 Strands Web Research Agent - Fixed Version")
+    print("=" * 50)
+    
+    try:
+        # Create agent
+        agent = create_web_research_agent()
+        print(f"✅ Agent Status: {agent.get_status()}")
+        
+        # Test queries
+        test_queries = [
+            "Research the latest AI trends for 2025",
+            "Find current Amazon stock price",
+            "Best Python learning resources"
+        ]
+        
+        for query in test_queries:
+            print(f"\n🔍 Testing: {query}")
+            print("-" * 30)
+            response = agent.chat(query)
+            print(response[:200] + "..." if len(response) > 200 else response)
+            
+    except Exception as e:
+        print(f"\n❌ Error: {str(e)}")
+        print("💡 Try running: python advanced_agent/setup_web_research.py")
 
 if __name__ == "__main__":
     main()

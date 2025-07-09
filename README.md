@@ -159,6 +159,57 @@ aws configure
 
 5. Enable Claude model access in AWS Bedrock console (Claude 3.7 Sonnet recommended)
 
+6. **Set up Web Research Agent (for real browser automation):**
+```bash
+# Install official Strands MCP tools and browser dependencies
+python advanced_agent/setup_web_research.py
+```
+
+## 🌐 Web Research Agent
+
+The Web Research Agent is the flagship feature, demonstrating real browser automation using official Strands MCP tools:
+
+### Key Features
+- **Real Browser Automation**: Uses official `use_browser` MCP tool with Playwright
+- **HTTP API Integration**: Uses `http_request` MCP tool for direct API calls
+- **Multi-source Research**: Combines browser automation with API data
+- **Content Extraction**: Intelligent parsing and synthesis from live web sources
+- **Source Citations**: Provides URLs, timestamps, and references
+- **Interactive UI**: Enhanced Streamlit interface with real-time status
+
+### MCP Tools Used
+- **use_browser**: Playwright-powered browser automation
+  - `navigate` - Navigate to URLs with error handling
+  - `click` - Click elements with selector validation
+  - `type` - Fill forms and input fields
+  - `get_text` - Extract text content from elements
+  - `get_html` - Get HTML content from page sections
+  - `screenshot` - Capture page screenshots
+  - `evaluate` - Execute JavaScript for dynamic content
+  - `new_tab` / `switch_tab` - Multi-tab browsing support
+
+- **http_request**: Direct HTTP client for APIs
+  - GET/POST/PUT/DELETE requests
+  - Authentication support (Bearer, Basic, API keys)
+  - JSON/XML response handling
+  - Custom headers and parameters
+
+### Sample Research Queries
+- "Research the latest AI trends in 2025"
+- "Find current information about Python web frameworks"
+- "Search for recent news about machine learning breakthroughs"
+- "Compare pricing for cloud computing services"
+- "Get the latest stock market data for tech companies"
+
+### Environment Variables
+```bash
+# Browser configuration (optional)
+export STRANDS_BROWSER_HEADLESS=false    # Show browser window
+export STRANDS_BROWSER_WIDTH=1280        # Browser width
+export STRANDS_BROWSER_HEIGHT=800        # Browser height
+export BYPASS_TOOL_CONSENT=true          # Skip confirmation prompts
+```
+
 ### Running Examples
 
 #### Using the Streamlit UI (Recommended)

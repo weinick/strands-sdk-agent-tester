@@ -306,12 +306,12 @@ with col1:
             with sample_col1:
                 st.markdown("**🔍 Research**")
                 if st.button("📚 Research AI trends", key="sample1", use_container_width=True, help="Test research capabilities"):
-                    st.session_state.sample_input = "Research the latest trends in artificial intelligence for 2024"
+                    st.session_state.sample_input = "Research the latest trends in artificial intelligence for 2025"
             
             with sample_col2:
-                st.markdown("**📰 News**")
-                if st.button("📺 Find tech news", key="sample2", use_container_width=True, help="Test news gathering"):
-                    st.session_state.sample_input = "Find recent news about machine learning breakthroughs"
+                st.markdown("**📈 Stock Price**")
+                if st.button("💰 Amazon stock price", key="sample2", use_container_width=True, help="Test stock price lookup"):
+                    st.session_state.sample_input = "Search current stock price of Amazon"
             
             with sample_col3:
                 st.markdown("**🎓 Learning**")
@@ -343,7 +343,7 @@ with col1:
             with sample_col2:
                 st.markdown("**📊 Complex Task**")
                 if st.button("📈 Data + Research", key="sample2", use_container_width=True, help="Test complex multi-step task"):
-                    st.session_state.sample_input = "Research Python data science libraries and create a comparison"
+                    st.session_state.sample_input = "Research Python data science libraries and create a comparison for 2025"
             
             with sample_col3:
                 st.markdown("**🎯 Problem Solving**")

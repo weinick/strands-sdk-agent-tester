@@ -46,6 +46,12 @@ def launch_streamlit():
     print("- Check the terminal for any error messages")
     print("="*50 + "\n")
     
+    # Set environment variables for Strands tools
+    print("⚙️ Setting up Strands SDK environment...")
+    os.environ["BYPASS_TOOL_CONSENT"] = "true"
+    os.environ["STRANDS_BROWSER_HEADLESS"] = "true"  # Run browser in headless mode for UI
+    print("✅ Environment configured for Strands tools")
+    
     try:
         # Launch Streamlit with custom configuration
         subprocess.run([

@@ -35,6 +35,42 @@ class AgentRunner:
         self.project_root = Path(project_root)
         self.loaded_agents = {}
         
+        # Set up environment variables for Strands tools
+        self._setup_strands_environment()
+        
+    def _setup_strands_environment(self):
+        """Set up environment variables for Strands SDK tools"""
+        # Enable tool consent bypass for UI usage
+        os.environ["BYPASS_TOOL_CONSENT"] = "true"
+        
+        # Configure browser settings for headless operation
+        os.environ["STRANDS_BROWSER_HEADLESS"] = "true"
+        
+        # Set other useful Strands environment variables
+        os.environ.setdefault("STRANDS_BROWSER_WIDTH", "1280")
+        os.environ.setdefault("STRANDS_BROWSER_HEIGHT", "800")
+        
+        # Add timeout settings for faster operations
+        os.environ.setdefault("PLAYWRIGHT_TIMEOUT", "10000")  # 10 seconds
+        os.environ.setdefault("PLAYWRIGHT_NAVIGATION_TIMEOUT", "15000")  # 15 seconds
+        
+        print("⚙️ Strands SDK environment configured for UI usage (China-optimized)")
+        
+    def _format_response_with_thinking(self, final_result: str, thinking_process: str) -> str:
+        """Format response with final result first, then collapsible thinking process"""
+        return f"""📤 **Final Result:**
+
+{final_result}
+
+---
+
+<details>
+<summary>🧠 <strong>System Process Details</strong> (Click to expand)</summary>
+
+{thinking_process}
+
+</details>"""
+
     def run_agent(self, agent_type: str, model_config: Dict[str, Any], user_input: str = "") -> str:
         """Run the specified agent with given configuration"""
         try:
@@ -54,9 +90,10 @@ class AgentRunner:
 - Real agents not available, using fallback demonstrations
 - This shows how the system would work with full agent implementations
 - Fallback responses demonstrate expected tool usage patterns
-
 """
-                return thinking_process + self._fallback_response(agent_type, model_config, user_input)
+                fallback_result, fallback_thinking = self._fallback_response(agent_type, model_config, user_input)
+                combined_thinking = thinking_process + fallback_thinking
+                return self._format_response_with_thinking(fallback_result, combined_thinking)
             
             # Get or create agent instance
             agent_key = f"{agent_type}_{id(model_config)}"
@@ -111,10 +148,10 @@ class AgentRunner:
                 thinking_process += f"""- ✅ Received response from model
 - Response length: {len(response)} characters
 - Processing complete
-
-**📤 Final Response:**
 """
-                return thinking_process + response
+                
+                # Use helper function to format response
+                return self._format_response_with_thinking(response, thinking_process)
             else:
                 # Return agent status or welcome message
                 thinking_process += f"""- No user input provided, returning agent status
@@ -126,9 +163,9 @@ class AgentRunner:
                     thinking_process += f"""**📊 Agent Status Retrieved:**
 - Status: {status.get('status', 'Unknown')}
 - Configuration: {status.get('model_config', {})}
-
 """
-                    return thinking_process + f"""**{agent_type} Ready**
+                    
+                    status_result = f"""**{agent_type} Ready**
 
 Agent initialized and ready to assist!
 
@@ -140,8 +177,11 @@ Agent initialized and ready to assist!
 **Status:** {status.get('status', 'Ready')}
 
 Start chatting to interact with this agent!"""
+                    
+                    return self._format_response_with_thinking(status_result, thinking_process)
                 else:
-                    return thinking_process + f"**{agent_type}** is ready! Start chatting to interact."
+                    ready_result = f"**{agent_type}** is ready! Start chatting to interact."
+                    return self._format_response_with_thinking(ready_result, thinking_process)
                 
         except Exception as e:
             error_trace = traceback.format_exc()
@@ -158,9 +198,9 @@ Start chatting to interact with this agent!"""
 - Caught exception in run_agent()
 - Generating detailed error report
 - Providing troubleshooting guidance
-
 """
-            return error_thinking + f"""**Error Running {agent_type}:**
+            
+            error_result = f"""**Error Running {agent_type}:**
 
 Error: {str(e)}
 
@@ -170,11 +210,13 @@ Error: {str(e)}
 ```
 
 **Troubleshooting Tips:**
-1. Check if all required dependencies are installed
-2. Verify your API keys are correctly configured
-3. Ensure the agent files exist in the expected locations
-4. Check your internet connection for web-based agents
-"""
+1. Check if all dependencies are installed
+2. Verify model configuration is correct
+3. Ensure AWS credentials are set up (for Bedrock)
+4. Try restarting the application
+5. Check the console for additional error details"""
+            
+            return self._format_response_with_thinking(error_result, error_thinking)
     
     def _create_agent(self, agent_type: str, model_config: Dict[str, Any]):
         """Create an agent instance based on type"""
@@ -197,32 +239,38 @@ Error: {str(e)}
             print(f"Error creating {agent_type}: {str(e)}")
             return None
     
-    def _fallback_response(self, agent_type: str, model_config: Dict[str, Any], user_input: str) -> str:
-        """Fallback response when agents are not available"""
+    def _fallback_response(self, agent_type: str, model_config: Dict[str, Any], user_input: str) -> tuple:
+        """Fallback response when agents are not available - returns (result, thinking_process)"""
         
         fallback_thinking = f"""**🔄 Fallback System Process:**
 - Real agent implementations not available
 - Using demonstration responses to show expected behavior
 - This simulates how {agent_type} would process: "{user_input}"
 - Model that would be used: {model_config.get('provider')} - {model_config.get('model')}
-
 """
         
         # Static fallback responses for each agent type
         if agent_type == "Simple Agent":
-            return fallback_thinking + self._simple_agent_fallback(model_config, user_input)
+            result = self._simple_agent_fallback(model_config, user_input)
+            return result, fallback_thinking
         elif agent_type == "Agent with Tools":
-            return fallback_thinking + self._tools_agent_fallback(model_config, user_input)
+            result = self._tools_agent_fallback(model_config, user_input)
+            return result, fallback_thinking
         elif agent_type == "Custom Tool Agent":
-            return fallback_thinking + self._custom_tools_fallback(model_config, user_input)
+            result = self._custom_tools_fallback(model_config, user_input)
+            return result, fallback_thinking
         elif agent_type == "Web Research Agent":
-            return fallback_thinking + self._research_agent_fallback(model_config, user_input)
+            result = self._research_agent_fallback(model_config, user_input)
+            return result, fallback_thinking
         elif agent_type == "File Manager Agent":
-            return fallback_thinking + self._file_manager_fallback(model_config, user_input)
+            result = self._file_manager_fallback(model_config, user_input)
+            return result, fallback_thinking
         elif agent_type == "Multi Agent System":
-            return fallback_thinking + self._multi_agent_fallback(model_config, user_input)
+            result = self._multi_agent_fallback(model_config, user_input)
+            return result, fallback_thinking
         else:
-            return fallback_thinking + f"Unknown agent type: {agent_type}"
+            result = f"Unknown agent type: {agent_type}"
+            return result, fallback_thinking
     
     def _simple_agent_fallback(self, model_config: Dict[str, Any], user_input: str) -> str:
         """Fallback for Simple Agent"""

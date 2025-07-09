@@ -11,6 +11,13 @@ requests>=2.31.0
 # Additional utilities
 python-dotenv>=1.0.0
 
+# Official Strands Agents Tools (MCP Tools)
+strands-agents-tools>=0.1.4
+
+# Browser automation dependencies (for use_browser tool)
+playwright>=1.40.0
+nest-asyncio>=1.5.0
+
 # Optional: Enhanced functionality
 # Uncomment these for additional features:
 
@@ -22,7 +29,7 @@ python-dotenv>=1.0.0
 # pandas>=1.5.0
 # numpy>=1.24.0
 
-# For web scraping (if implementing real web search)
+# For web scraping (additional to use_browser tool)
 # beautifulsoup4>=4.12.0
 # selenium>=4.15.0
 
@@ -31,4 +38,7 @@ python-dotenv>=1.0.0
 # python-magic>=0.4.27  # File type detection
 
 # Note: Install Streamlit UI dependencies separately with:
-# pip install -r requirements_ui.txt
+# pip install -r ui/requirements_ui.txt
+
+# After installing, run: playwright install
+# to download browser binaries for the use_browser tool
